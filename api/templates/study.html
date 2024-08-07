@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Study
+{% endblock %}
+
+{% block main %}
+<style>
+    #flashcard-study {
+        width: 700px;
+        height: 500px;
+        text-align: center
+    }
+
+    button {
+        border-radius: 10px;
+    }
+</style>
+<div class="container m-5">
+
+    <a href="/terms-preview">
+        <button class="btn background-body">
+            <h3>←</h3>
+        </button>
+    </a>
+
+    <div class="d-flex justify-content-center">
+        <div class="d-flex align-items-center justify-content-center shadow-lg bg-body rounded p-5"
+             id="flashcard-study">
+            <h3 id="study-content"></h3>
+        </div>
+    </div>
+
+    <div class="row mt-5 mb-2 d-flex justify-content-center">
+        <div class="col-auto">
+            <button class="btn btn-light" id="stu-back">←</button>
+        </div>
+        <div class="col-auto">
+            <p id="stu-counter"></p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-light" id="stu-forward">→</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("stu-back").addEventListener('click', goBack);
+    document.getElementById("stu-forward").addEventListener('click', goForward);
+    document.getElementById("flashcard-study").addEventListener('click', flip);
+
+    let set = JSON.parse(localStorage.getItem('set'))
+    let quantity = set.quantity
+    let card = 0
+    let display = 1
+    let question = true
+    let content = document.getElementById("study-content")
+    let counter = document.getElementById("stu-counter")
+
+    console.log(set)
+
+    content.innerHTML = set.questions[0].question
+
+    // i feel like there's a better way to do this
+    // quantity is already one more than card(index). so like what does that mean
+    counter.innerText = 1 + "/" + quantity
+
+
+    window.addEventListener("keydown", function (e) {
+        if (e.code == 'ArrowLeft') {
+            goBack(e)
+        } else if (e.code == 'ArrowRight') {
+            goForward(e)
+        } else if (e.code == 'Space') {
+            flip(e)
+        }
+    })
+
+    function goBack(event) {
+        event.preventDefault()
+        // error if card is 0 is that a problem
+        if (card > 0) {
+            card -= 1
+            display -= 1
+            counter.innerText = display + "/" + quantity
+            let question = set.questions[card].question
+            content.innerHTML = question
+            console.log("question: " + question)
+            console.log("card: " + card)
+        }
+    }
+
+    function goForward(event) {
+        event.preventDefault()
+        if (card < quantity - 1) {
+            card += 1
+            display += 1
+            counter.innerText = display + "/" + quantity
+            let question = set.questions[card].question
+            content.innerHTML = question
+            console.log("question: " + question)
+            console.log("card: " + card)
+
+        }
+    }
+
+    function flip(event) {
+        event.preventDefault()
+        if (question) {
+            let answer = set.questions[card].answer
+            content.innerHTML = answer
+        } else {
+            let question = set.questions[card].question
+            content.innerHTML = question
+        }
+        question = !question;
+    }
+
+</script>
+
+{% endblock %}

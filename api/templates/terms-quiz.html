@@ -1,0 +1,187 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Flashcards Quiz - Coming Soon
+{% endblock %}
+
+{% block main %}
+<style>
+    #card-quiz {
+        width: 800px;
+    }
+
+    button {
+        border-radius: 10px;
+    }
+
+    .text-left {
+        text-align: left !important;
+    }
+</style>
+<div class="container m-5">
+    <a href="/library/All">
+        <button class="btn background-body">
+            <h3>←</h3>
+        </button>
+    </a>
+    <div class="d-flex justify-content-center mb-5">
+        <div class="card shadow-lg bg-body rounded p-5">
+            <div class="card-body d-flex flex-column justify-content-start">
+                <div class="card-text mt-auto">
+                    <h3 id="terms-result"></h3>
+                    <form id="terms-quiz-form">
+                        <button class="btn btn-light mt-5 p-3 px-5" id="terms-quiz-submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.body.onload = addElements
+    document.getElementById("terms-quiz-submit").addEventListener('click', getResults)
+
+    let set = JSON.parse(localStorage.getItem('set'))
+    let quantity = set.quantity
+    let card = 0
+    let display = 1
+    let question = true
+    let answers_count
+    if (quantity >= 4) {
+        answers_count = 4
+    } else {
+        answers_count = quantity
+    }
+
+    let question_indices = []
+    let answer_option_indices = []
+    for (let i = 0; i < quantity; i++) {
+        question_indices.push(i)
+    }
+
+    for (let i = 0; i < answers_count; i++) {
+        answer_option_indices.push(i)
+    }
+    function addElements() {
+        let form = document.getElementById('terms-quiz-form')
+        let button = document.getElementById('terms-quiz-submit')
+        shuffle(question_indices)
+        console.log(question_indices)
+
+        for (let i = 0; i < quantity; i++) {
+            display = i + 1
+            let q_index = question_indices[i]
+
+            let answer_options = []
+            for (let i = 0; i < answers_count; i++) {
+                console.log('i: ' + i)
+                if (i == 0) {
+                    answer_options[i] = set.questions[q_index].answer
+                } else {
+                    // get rid of q_index from answer_option_indices
+                    for (let j = 0; j < answers_count; j++) {
+                        if (answer_option_indices[j] == q_index) {
+                            answer_option_indices.splice(j, 1)
+                        }
+                    }
+                    console.log(answer_option_indices)
+                    shuffle(answer_option_indices)
+                    let a_index = answer_option_indices[0]
+                    console.log("a_index: " + a_index)
+                    answer_options[i] = set.questions[a_index].answer
+                    answer_option_indices.splice(0, 1)
+                    console.log(answer_option_indices)
+
+                }
+            }
+            for (let i = 0; i < answers_count; i++) {
+                answer_option_indices.push(i)
+            }
+            shuffle(answer_options)
+            console.log(answer_options)
+
+            let question = document.createElement('h5')
+            if (i != 0) {
+                question.classList.add('mt-5')
+            }
+            question.innerText = display + '. ' + set.questions[q_index].question
+            form.insertBefore(question, button)
+
+            for (let j = 0; j < answers_count; j++) {
+                let answer = answer_options[j]
+                console.log('answer: ' + answer)
+                if (answer == set.questions[q_index].answer) {
+                    let correct_div = document.createElement('div')
+                    correct_div.classList.add("form-check")
+
+                    let correct_input = document.createElement('input')
+                    correct_input.classList.add('form-check-input')
+                    correct_input.type = 'radio'
+                    correct_input.name = 'answer' + i
+                    correct_input.value = "correct" + i
+
+                    let correct_label = document.createElement('label')
+                    correct_label.classList.add('form-check-label')
+                    correct_label.setAttribute("for", "correct" + i);
+                    correct_label.id = "correct" + i
+                    correct_label.innerText = answer
+
+                    correct_div.append(correct_input)
+                    correct_div.append(correct_label)
+                    form.insertBefore(correct_div, button)
+
+                } else {
+                    let wrong_div = document.createElement('div')
+                    wrong_div.classList.add("form-check")
+
+                    let wrong_input = document.createElement('input')
+                    wrong_input.classList.add('form-check-input')
+                    wrong_input.type = 'radio'
+                    wrong_input.value = 'wrong' + q_index
+
+                    let wrong_label = document.createElement('label')
+                    wrong_label.classList.add('form-check-label')
+                    wrong_label.setAttribute("for", "wrong" + q_index);
+                    wrong_label.innerText = answer
+
+                    wrong_div.append(wrong_input)
+                    wrong_div.append(wrong_label)
+                    form.insertBefore(wrong_div, button)
+                }
+            }
+        }
+    }
+
+    function getResults(e) {
+        e.preventDefault()
+        let correct = 0
+        let answers = document.querySelectorAll('input[type=radio]:checked')
+
+        for (let i = 0; i < quantity; i++) {
+            if (answers[i].value == ('correct' + i)) {
+                correct++
+            }
+
+            let correct_answer = document.getElementById('correct' + i)
+            correct_answer.style.color = "green"
+        }
+
+        console.log("correct: " + correct)
+
+        let result = document.getElementById("terms-result")
+        result.innerText = correct + '/' + quantity
+        result.classList.add('mb-3')
+    }
+
+    function shuffle(array) {
+        let currentIndex = array.length
+        while (currentIndex != 0) {
+            let randomIndex = Math.floor(Math.random() * currentIndex)
+            currentIndex--
+
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]
+        }
+    }
+</script>
+{% endblock %}
+

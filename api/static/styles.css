@@ -1,0 +1,149 @@
+body {
+    color: #5F423D;
+    font-family: "elza-text", sans-serif;
+    font-weight: 400;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+
+.navbar-brand {
+    font-family: "arial", sans-serif;
+    font-weight: 700;
+    font-size: 1.5em;
+    text-align: center;
+    color: #5F423D;
+}
+
+.navbar-brand:hover {
+    color: #39231F;
+}
+
+.nav-link {
+    font-family: "elza-text", sans-serif;
+    font-weight: 400;
+    font-size: 1.125em;
+    color: #5F423D;
+    margin-left: 20px;
+}
+
+.nav-link:hover {
+    color: #39231F;
+}
+
+.navbar {
+    padding-top: 0px;
+    background-color: #FFE5F1;
+}
+
+.card {
+    color: #5F423D;
+    /*background-color: #FFE5F1;*/
+    border: none;
+    border-radius: 10px;
+}
+
+/*maybe unsure kind of ugly*/
+.shadow-lg-custom {
+    box-shadow: 0 1rem 3rem rgba(95, 66, 61, 0.2) !important;
+}
+
+.btn-light {
+    color: #5F423D;
+    background-color: #FFE5F1;
+    border: none;
+    border-radius: 50px;
+}
+
+.btn-light h5, h6 {
+    margin: 0;
+}
+
+.btn-light:hover {
+    color: #5F423D;
+    background-color: #FFCFE5;
+}
+
+textarea:disabled {
+    color: #5F423D;
+    background-color: #F5F3F3;
+    border-radius: 10px;
+    border: none;
+    padding: 10px;
+}
+
+.dropdown-item {
+    color: #5F423D;
+}
+
+.dropdown-item:hover {
+    color: #39231F;
+    background-color: #F5F3F3;
+}
+
+.type {
+    background-color: #FFE5F1;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+a:hover {
+
+}
+
+.preview-term {
+    background-color: #F5F3F3;
+}
+
+.card-head {
+    background-color: #F5F3F3;
+}
+
+
+#gradient {
+    background-image: radial-gradient(circle, #FFE5F1 5%, #ffffff 60%);
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+#home-title {
+    font-size: 4em;
+    font-weight: 700;
+}
+
+h1 {
+    font-weight: 600;
+}
+
+
+.btn-index {
+    border: 1px solid #5F423D;
+}
+
+.btn-index:hover {
+    border: 1px solid #5F423D;
+}
+
+h3 {
+    color: #5F423D;
+}
+
+
+.full-page {
+    height: 100%;
+}
+
+.container {
+    padding-bottom: 30px;
+}
+
+.edit-card {
+    border: 2px solid #F5F3F3;
+    border-radius: 10px;
+}

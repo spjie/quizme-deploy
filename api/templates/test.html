@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Test
+{% endblock %}
+
+{% block main %}
+<div class="container m-5">
+    <textarea disabled id="test-text" class="form-control" rows="20"></textarea>
+    <br>
+    <input type="text" id="test-input" class="form-control">
+</div>
+
+<script>
+    document.getElementById("test-input").addEventListener("change", fetchSelectData)
+
+    function fetchSelectData(event) {
+        event.preventDefault();
+
+        let conversation = [
+            {
+                "role": "system", "content": "Generate a number of quiz questions each with four answer options, " +
+                    "one of which should be correct, as specified by user, based on notes provided by the user. " +
+                    "They will be provided in the format quantity + 'notes'. Also generate a title and description " +
+                    "for the set of questions. Return JSON. The JSON should have a key named type for which the " +
+                    "value should be 'quiz', a key named title for the title, a key named description for the " +
+                    "description, and a key named 'questions', for which the value is an array consisting of a " +
+                    "key called 'question', one key called 'correct-answer', and a key called 'wrong-answers'. " +
+                    "Return JSON."
+            }
+        ]
+
+        let promptInput = document.getElementById("test-input")
+        let prompt = promptInput.value;
+        promptInput.value = "";
+
+        let textarea = document.getElementById("test-text");
+        textarea.value += "USER: " + prompt + "\n\n";
+
+        conversation.push({"role": "user", "content": prompt})
+        fetch('/chat?prompt=' + JSON.stringify(conversation))
+            .then(response => {
+                return response.text();
+            })
+            .then(jsonData => {
+                let textarea = document.getElementById("test-text");
+                textarea.value += "CHATBOT: " + jsonData + "\n\n";
+            })
+            .catch(error => {
+                console.error("Error fetching JSON:", error);
+            });
+    }
+</script>
+{% endblock %}

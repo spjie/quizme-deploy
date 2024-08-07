@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Quiz Practice
+{% endblock %}
+
+{% block main %}
+<style>
+    #card-learn {
+        width: 800px;
+        height: 550px;
+    }
+
+    button {
+        border-radius: 10px;
+    }
+</style>
+<div class="container m-5">
+
+    <a href="/preview">
+        <button class="btn background-body">
+            <h3>←</h3>
+        </button>
+    </a>
+
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-lg bg-body rounded p-5" id="card-learn">
+            <div class="card-title">
+                <h3 id="learn-content-test" class="p-3">Question</h3>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="card-text mt-auto">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <button class="form-control btn btn-light mb-4 p-3" id="correct">Answer</button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button class="form-control btn btn-light mb-4 p-3 wrong">Answer</button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button class="form-control btn btn-light mb-4 p-3 wrong">Answer</button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button class="form-control btn btn-light mb-4 p-3 wrong">Answer</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let quiz = JSON.parse(localStorage.getItem('quiz'))
+    let quantity = quiz.quantity
+    let card = 0
+    let display = 1
+    let question = true
+
+    let index = Math.floor(Math.random() * quantity)
+    document.getElementById('learn-content-test').innerText = quiz.questions[index].question
+    document.getElementById('correct').innerText = quiz.questions[index].correct_answer
+    document.getElementById("correct").addEventListener('click', correct);
+
+    let wrong_answers = document.getElementsByClassName('wrong')
+    for (let i = 0; i < 3; i++) {
+        wrong_answers[i].innerHTML = quiz.questions[index].wrong_answers[i]
+        wrong_answers[i].addEventListener('click', wrong)
+    }
+
+    function correct() {
+        
+        clicked()
+    }
+
+    function wrong() {
+        clicked()
+
+    }
+
+    function clicked() {
+
+    }
+
+</script>
+{% endblock %}

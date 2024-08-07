@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Quiz Preview
+{% endblock %}
+
+{% block main %}
+<style>
+    #flashcard-preview {
+        width: 800px;
+        height: 500px;
+    }
+
+    button {
+        border-radius: 10px;
+    }
+</style>
+<div class="container m-5">
+    <div class="container m-5">
+        <h1 class="mb-4" id="quiz-title"></h1>
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="d-flex flex-column">
+                    <textarea disabled class="form-control w-75 mb-4" rows="8" id="quiz-desc">Description</textarea>
+                    <a href='/study'>
+                        <a href='/learn'>
+                            <button class="btn btn-light w-75 mb-4 py-3">Learn</button>
+                        </a>
+                        <a href='/quiz'>
+                            <button class="btn btn-light w-75 mb-4 py-3">Quiz</button>
+                        </a>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="card text-center shadow-lg" id="flashcard-preview">
+                        <div class="card-body d-flex justify-content-center align-items-center">
+                            <h3 class="card-text  my-auto" id="preview-content">Term</h3>
+                        </div>
+                    </div>
+                    </br>
+                    <div class="row">
+                        <div class="col-auto">
+                            <button class="btn btn-light" id="pre-back"><</button>
+                        </div>
+                        <div class="col-auto">
+                            <p id="pre-counter"></p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-light" id="pre-forward">></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container m-5" id="quiz-div">
+        <div class="d-flex justify-content-between mb-4">
+            <h1 id="quiz-header"></h1>
+            <a href='/edit'>
+                <button class="btn btn-light" id="edit">Edit</button>
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+    document.body.onload = addElements;
+
+    document.getElementById("pre-back").addEventListener('click', goBack);
+    document.getElementById("pre-forward").addEventListener('click', goForward);
+    document.getElementById("flashcard-preview").addEventListener('click', flip);
+
+    let set = JSON.parse(localStorage.getItem('quiz'))
+    let quantity = set.quantity
+    let card = 0
+    let display = 1
+    let question = true
+    let content = document.getElementById('preview-content')
+    let counter = document.getElementById("pre-counter")
+
+    content.innerText = set.questions[0].question
+    counter.innerText = 1 + "/" + quantity
+
+    window.addEventListener("keydown", function (e) {
+        if (e.code == 'ArrowLeft') {
+            goBack(e)
+        } else if (e.code == 'ArrowRight') {
+            goForward(e)
+        } else if (e.code == 'Space') {
+            flip(e)
+        }
+    })
+
+    function addElements() {
+        let title = document.getElementById('quiz-title')
+        title.innerText = set.title
+        let description = document.getElementById('quiz-desc')
+        description.innerText = set.description
+
+        let header = document.getElementById('quiz-header')
+        header.innerText = "Terms (" + quantity + ")"
+
+        for (let i = 0; i < quantity; i++) {
+            let newTerm = document.createElement("div")
+            newTerm.classList.add('card', 'mb-4')
+
+            let termBody = document.createElement('div')
+            termBody.classList.add('card-body')
+
+            let bodyRow = document.createElement('div')
+            bodyRow.classList.add('row')
+
+            let qCol = document.createElement('div')
+            qCol.classList.add('col-sm-4')
+            let aCol = document.createElement('div')
+            aCol.classList.add('col-sm-8')
+
+            let qText = document.createElement('div')
+            qText.classList.add('card-text')
+            let aText = document.createElement('div')
+            aText.classList.add('card-text')
+
+            let qP = document.createElement('p')
+            qP.innerText = set.questions[i].question
+            let aP = document.createElement('p')
+            aP.innerText = set.questions[i].answer
+
+            newTerm.append(termBody)
+            termBody.append(bodyRow)
+            bodyRow.append(qCol)
+            bodyRow.append(aCol)
+            qCol.append(qText)
+            aCol.append(aText)
+            qText.append(qP)
+            aText.append(aP)
+
+            document.getElementById('quiz-div').append(newTerm)
+        }
+
+    }
+
+    function goBack(event) {
+        event.preventDefault()
+        // error if card is 0 is that a problem
+        if (card > 0) {
+            card -= 1
+            display -= 1
+            counter.innerText = display + "/" + quantity
+            let question = set.questions[card].question
+            content.innerHTML = question
+            console.log("question: " + question)
+            console.log("card: " + card)
+        }
+    }
+
+    function goForward(event) {
+        event.preventDefault()
+        if (card < quantity - 1) {
+            card += 1
+            display += 1
+            counter.innerText = display + "/" + quantity
+            let question = set.questions[card].question
+            content.innerHTML = question
+            console.log("question: " + question)
+            console.log("card: " + card)
+
+        }
+    }
+
+    function flip(event) {
+        event.preventDefault()
+        if (question) {
+            let answer = set.questions[card].answer
+            content.innerHTML = answer
+        } else {
+            let question = set.questions[card].question
+            content.innerHTML = question
+        }
+        question = !question;
+    }
+
+</script>
+{% endblock %}

@@ -1,0 +1,251 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Library
+{% endblock %}
+
+{% block main %}
+
+<div class="container m-5">
+    <div class="container m-5">
+        <h1 id="home-header">{{ page }}</h1>
+        <div class="row" id="index-row">
+
+            <!--            <div class="col-sm-4">-->
+            <!--                <div class="card my-2">-->
+            <!--                    <div class="card-body home-set">-->
+            <!--                        <h5>Title</h5>-->
+            <!--                        <div class="card-text">-->
+            <!--                            <p>5 Terms</p>-->
+            <!--                            <p>Quiz</p>-->
+            <!--                            <div class="row">-->
+            <!--                                <div class="col-auto">-->
+            <!--                                    <p id="home-edit">edit</p>-->
+            <!--                                </div>-->
+            <!--                                <div class="col-auto">-->
+            <!--                                    <p>delete</p>-->
+            <!--                                </div>-->
+            <!--                            </div>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </div>-->
+
+        </div>
+    </div>
+</div>
+
+<!--modal!-->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <!--                get file name-->
+                <h1 class="modal-title fs-5" id="deleteModalLabel">Delete file?</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <button type="button" class="btn btn-light modalDeleteButton">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let type = document.getElementById('home-header').innerText
+    let page_headers = []
+    let sets_count = 0
+
+    document.body.onload = addElements
+
+    async function addElements() {
+        try {
+            if (type == 'All') {
+                page_headers = await getHeaders()
+                sets_count = page_headers.length
+            } else {
+                await getPageSets(type)
+                sets_count = page_headers.length
+            }
+
+            let header = document.getElementById('home-header')
+            header.innerText += (" (" + sets_count + ")")
+
+            for (let i = 0; i < sets_count; i++) {
+                let set = await openJson(page_headers[i])
+
+                let newSetCol = document.createElement('div')
+                newSetCol.classList.add('col-sm-4')
+
+                let newSet = document.createElement('div')
+                newSet.classList.add('card', 'my-2', 'shadow-lg-custom')
+
+                let setTitle = document.createElement('div')
+                setTitle.classList.add('card-title', 'd-flex', 'justify-content-between', 'mt-4', 'mx-3')
+
+                let titleTitle = document.createElement('h5')
+                titleTitle.classList.add('card-title')
+                titleTitle.innerHTML = page_headers[i]
+
+                let titleDropdown = document.createElement('div')
+                titleDropdown.classList.add('dropdown')
+
+                let dropdownToggle = document.createElement('a')
+                dropdownToggle.role = "button"
+                dropdownToggle.setAttribute("data-bs-toggle", "dropdown")
+                dropdownToggle.setAttribute("aria-expanded", "false")
+                dropdownToggle.innerText = '...'
+
+                let dropdownMenu = document.createElement('ul')
+                dropdownMenu.classList.add('dropdown-menu', 'p-3')
+
+                let editItem = document.createElement('li')
+                let deleteItem = document.createElement('li')
+
+                let editButton = document.createElement('button')
+                editButton.classList.add('btn', 'bg-body', 'edit')
+                editButton.innerText = "Edit"
+
+                let deleteButton = document.createElement('button')
+                deleteButton.classList.add('btn', 'bg-body', 'dropdownDel')
+                deleteButton.type = "button"
+                deleteButton.setAttribute("data-bs-toggle", "modal")
+                deleteButton.setAttribute("data-bs-target", "#deleteModal")
+                deleteButton.innerText = "Delete"
+
+                let setBody = document.createElement('div')
+                setBody.classList.add('card-body', 'home-set')
+
+                let bodyTerms = document.createElement('p')
+                bodyTerms.classList.add('card-text')
+                bodyTerms.innerHTML = set.quantity + ' terms'
+                let bodyType = document.createElement('p')
+                let bodyTypeSpan = document.createElement('span')
+                bodyTypeSpan.innerHTML = set.type
+                bodyTypeSpan.classList.add('type')
+
+                newSetCol.append(newSet)
+                newSet.append(setTitle)
+                newSet.append(setBody)
+                setBody.append(bodyTerms)
+                bodyTerms.append(bodyType)
+                bodyType.append(bodyTypeSpan)
+
+                setTitle.append(titleTitle)
+                setTitle.append(titleDropdown)
+                titleDropdown.append(dropdownToggle)
+                titleDropdown.append(dropdownMenu)
+                dropdownMenu.append(editItem)
+                dropdownMenu.append(deleteItem)
+                editItem.append(editButton)
+                deleteItem.append(deleteButton)
+
+                document.getElementById('index-row').append(newSetCol)
+            }
+
+            let home_sets = document.getElementsByClassName('home-set')
+            for (let i = 0; i < home_sets.length; i++) {
+                home_sets[i].addEventListener('click', async function () {
+                    await newPage(page_headers[i], '/quiz', '/terms-preview')
+                })
+            }
+
+            let edit_buttons = document.getElementsByClassName('edit')
+            for (let i = 0; i < edit_buttons.length; i++) {
+                edit_buttons[i].addEventListener('click', async function (e) {
+                    e.stopPropagation()
+                    await newPage(page_headers[i], '#', '/edit')
+
+                })
+            }
+
+            let dropdown_del_btns = document.getElementsByClassName('dropdownDel')
+            for (let i = 0; i < dropdown_del_btns.length; i++) {
+                dropdown_del_btns[i].addEventListener('click', function () {
+                    let button = document.getElementsByClassName('modalDeleteButton')[0]
+
+                    button.addEventListener('click', async function () {
+                        await deleteJson(page_headers[i])
+                        location.reload()
+                    })
+                })
+            }
+
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
+
+    async function getPageSets(page) {
+        let headers = await getHeaders()
+        for (let i = 0; i < headers.length; i++) {
+            let data = await openJson(headers[i])
+            if (data.type == page) {
+                page_headers.push(headers[i])
+            }
+        }
+        console.log(page_headers)
+    }
+
+    async function getHeaders() {
+        const response = await fetch('/list-jsons')
+        if (!response.ok) {
+            throw new Error('Network response was not ok')
+        }
+        let data = await response.json()
+        console.log(data)
+        let filelist = parseArray(data)
+        return filelist
+    }
+
+    function parseArray(filelist) {
+        for (let i = 0; i < filelist.length; i++) {
+            filelist[i] = filelist[i].replace(".json", "")
+            if (filelist[i] == '.DS_Store') {
+                filelist.splice(i, 1)
+                console.log(i)
+                i--
+            }
+        }
+        console.log(filelist)
+        return filelist
+    }
+
+
+    async function openJson(name) {
+        let filename = name + ".json"
+        const response = await fetch('/open/' + filename)
+        if (!response.ok) {
+            throw new Error('Network response was not ok')
+        }
+        let data = await response.json()
+        return data
+    }
+
+    async function newPage(name, qhref, fhref) {
+        try {
+            let data = await openJson(name)
+            console.log(data.type)
+            if (data.type == 'Quiz') {
+                await localStorage.setItem('quiz', JSON.stringify(data))
+                window.location.href = qhref
+            } else {
+                await localStorage.setItem('set', JSON.stringify(data))
+                window.location.href = fhref
+            }
+        } catch (error) {
+            console.log("Error: ", error)
+        }
+    }
+
+    async function deleteJson(name) {
+        let filename = name + '.json'
+        const response = await fetch('/delete/' + filename)
+        if (!response.ok) {
+            throw new Error('Network response not ok')
+        }
+        console.log(response)
+        return response
+    }
+</script>
+{% endblock %}

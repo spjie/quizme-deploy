@@ -1,0 +1,193 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Edit
+{% endblock %}
+
+{% block main %}
+<div class="container m-5" id="div1">
+    <div class="row">
+        <div class="col-sm-6">
+            <input type="text" value="Title" id="edit-title" class="form-control mb-4" placeholder="Title">
+            <textarea class="form-control mb-5" rows="3" id="edit-desc" placeholder="Description"></textarea>
+        </div>
+        <div class="col-sm-6">
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-light save p-3 px-5">Save</button>
+            </div>
+        </div>
+    </div>
+    <button class=" form-control btn btn-light mb-5 p-4" id="add">+ add</button>
+    <button class="btn btn-light save p-3 px-5">Save</button>
+</div>
+
+<script>
+    document.body.onload = addElements;
+    let set = JSON.parse(localStorage.getItem('set'))
+    let quantity = set.quantity
+    const filename = set.title
+    let count = 0
+    document.getElementById("add").addEventListener("click", newTerm)
+
+    function addElements() {
+        let title = document.getElementById('edit-title')
+        title.value = set.title
+
+        let description = document.getElementById('edit-desc')
+        description.value = set.description
+
+        for (let i = 0; i < quantity; i++) {
+            let q = set.questions[i].question
+            let a = set.questions[i].answer
+            createTerm(q, a)
+        }
+
+        let save_buttons = document.getElementsByClassName("save")
+        for (let i = 0; i < save_buttons.length; i++) {
+            save_buttons[i].addEventListener("click", function () {
+                deleteOriginalJson()
+                saveJson()
+                window.location.href = 'terms-preview'
+            })
+        }
+
+        title.addEventListener('blur', updateSet)
+
+    }
+
+
+    function newTerm(e) {
+        e.preventDefault()
+        createTerm('', '')
+        const newQuestion = {question: '', answer: ''};
+        set.questions.push(newQuestion);
+        set.quantity++;
+        localStorage.setItem("set", JSON.stringify(set))
+        set = JSON.parse(localStorage.getItem('set'))
+        quantity = set.quantity
+        console.log(quantity)
+    }
+
+    function createTerm(q, a) {
+        const newTerm = document.createElement("div")
+        newTerm.classList.add('card', 'mb-5', 'edit-card')
+
+        const termHead = document.createElement("div")
+        termHead.classList.add('card-head')
+
+        const headDiv = document.createElement("div")
+        headDiv.classList.add('d-flex', 'justify-content-between', 'px-5', 'py-1', 'round')
+
+        count++
+        let index = count - 1
+
+        headDiv.append(document.createElement("p").innerHTML = count.toString())
+        const delete_button = document.createElement("button")
+        delete_button.classList.add('btn', 'background-body', 'delete')
+        delete_button.id = 'delete' + index
+        delete_button.innerHTML = 'delete'
+
+        delete_button.addEventListener("click", function (e) {
+            deleteTerm(e, index);
+        });
+
+        headDiv.append(delete_button)
+        termHead.append(headDiv)
+        newTerm.append(termHead)
+
+        const termBody = document.createElement("div")
+        termBody.classList.add('card-body')
+
+        const bodyRow = document.createElement("div")
+        bodyRow.classList.add('row')
+
+        const qCol = document.createElement('div')
+        qCol.classList.add('col-sm-6')
+        const aCol = document.createElement('div')
+        aCol.classList.add('col-sm-6')
+
+        const newQ = document.createElement("textarea")
+        newQ.classList.add('form-control')
+        newQ.id = "q" + index
+        newQ.value = q
+
+        const newA = document.createElement("textarea")
+        newA.classList.add('form-control')
+        newA.id = "a" + index
+        newA.value = a
+
+        qCol.append(newQ)
+        aCol.append(newA)
+        bodyRow.append(qCol)
+        bodyRow.append(aCol)
+        termBody.append(bodyRow)
+        newTerm.append(termBody)
+
+        let button = document.getElementById('add')
+        document.getElementById('div1').insertBefore(newTerm, button)
+
+        let textareas = document.querySelectorAll('textarea')
+        textareas.forEach(textarea => {
+            textarea.addEventListener('blur', updateSet)
+        })
+    }
+
+    function deleteTerm(e, index) {
+        e.preventDefault()
+        set.questions.splice(index, 1)
+        set.quantity--
+        localStorage.setItem('set', JSON.stringify(set))
+        set = JSON.parse(localStorage.getItem('set'))
+        quantity = set.quantity
+        location.reload()
+    }
+
+    function updateSet() {
+        let title = document.getElementById('edit-title')
+        set.title = title.value
+
+        let description = document.getElementById('edit-desc')
+        set.description = description.value
+
+        for (let i = 0; i < quantity; i++) {
+            set.questions[i].question = document.getElementById('q' + i).value
+            set.questions[i].answer = document.getElementById('a' + i).value
+        }
+
+        localStorage.setItem('set', JSON.stringify(set))
+        set = JSON.parse(localStorage.getItem('set'))
+        console.log('saved')
+    }
+
+    function deleteOriginalJson() {
+        let file = filename + '.json'
+        fetch('/delete/' + file)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success: ', data)
+            })
+            .catch((error) => {
+                console.error('Error:', error)
+            })
+    }
+
+    function saveJson() {
+        fetch('/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(set)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+
+</script>
+{% endblock %}

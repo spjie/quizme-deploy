@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Quizme
+{% endblock %}
+
+{% block main %}
+<style>
+    body {
+        text-align: center;
+    }
+</style>
+<!--<div class="d-flex justify-content-center align-items-center">-->
+<div id="gradient">
+    <div class="d-flex justify-content-center align-items-center m-5">
+        <div class="container m-5">
+            <h1 class="m-5" id="home-title">Studying just got a lot easier.</h1>
+            <h3>Generate flashcards and practice quizzes by selecting different topics or from your notes.</h3>
+            <h4 class="mb-5 mt-3">Let's start learning!</h4>
+            <div class="d-flex justify-content-center">
+                <a data-bs-toggle="modal" href="#flash">
+                    <button type="button" class="btn btn-light p-3 px-4 m-3 btn-index"><h5>Flashcards →</h5></button>
+                </a>
+                <a data-bs-toggle="modal" href="#quiz">
+                    <button type="button" class="btn btn-light p-3 px-4 m-3 btn-index"><h5>Quizzes →</h5></button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

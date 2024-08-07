@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Learn - Coming Soon
+{% endblock %}
+
+{% block main %}
+<div class="container m-5">
+  <h3>Coming Soon</h3>
+</div>
+<!--<style>-->
+<!--    #card-learn {-->
+<!--        width: 800px;-->
+<!--        height: 550px;-->
+<!--    }-->
+
+<!--    button {-->
+<!--        border-radius: 10px;-->
+<!--    }-->
+<!--</style>-->
+<!--<div class="container m-5">-->
+
+<!--    <a href="/preview">-->
+<!--        <button class="btn background-body">-->
+<!--            <h3>←</h3>-->
+<!--        </button>-->
+<!--    </a>-->
+
+<!--    <div class="d-flex justify-content-center">-->
+<!--        <div class="card shadow-lg bg-body rounded p-5" id="card-learn">-->
+<!--            <div class="card-title">-->
+<!--                <h3 id="learn-content" class="p-3">Question</h3>-->
+<!--            </div>-->
+<!--            <div class="card-body d-flex flex-column">-->
+<!--                <div class="card-text mt-auto">-->
+<!--                    <div class="row">-->
+<!--                        <div class="col-sm-6">-->
+<!--                            <button class="form-control btn btn-light mb-4 p-3">Answer</button>-->
+<!--                        </div>-->
+<!--                        <div class="col-sm-6">-->
+<!--                            <button class="form-control btn btn-light mb-4 p-3">Answer</button>-->
+<!--                        </div>-->
+<!--                        <div class="col-sm-6">-->
+<!--                            <button class="form-control btn btn-light mb-4 p-3">Answer</button>-->
+<!--                        </div>-->
+<!--                        <div class="col-sm-6">-->
+<!--                            <button class="form-control btn btn-light mb-4 p-3">Answer</button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<script>
+    // so i'll have an array of terms (new one) called new
+    // and generate questions by going thru each question in the set
+    // answers will be the right answer in a random spot and then randomly pick other answers from the set
+    // need random number gen for answer positions and to pick wrong answers
+    // if user gets answer right the term gets moved from the array called new to an array called learned. or i'll just remove it
+    // else tell the right answer and move on
+    // at the end like summarize? go thru all questions again.
+
+    let set = JSON.parse(localStorage.getItem('set'))
+    let quantity = localStorage.getItem('quantity')
+
+    let newTerms = []
+    for (let i = 0; i < quantity; i++) {
+        newTerms.push(i)
+    }
+    let learningTerms = []
+    let learnedTerms = []
+
+    // random number from 0 to quantity-1
+    let index = Math.floor(Math.random() * quantity)
+
+    function randomQA() {
+        //
+    }
+
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,249 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Create {{ type }}
+{% endblock %}
+
+{% block main %}
+<style>
+    body {
+        text-align: center;
+    }
+</style>
+<!--add full page class. how do i center it in viewport with nav-->
+<div class="container m-5 d-flex flex-column justify-content-center">
+    <div class="shadow-lg bg-body rounded p-5">
+        <h1 class="mb-1">Select</h1>
+        <h5 id="select-type" class="mb-4">{{ type }}</h5>
+        <form>
+            <!--                    <label for="subject">Select Subject</label>-->
+            <div class="mb-4">
+                <select class="form-control mb-4" name="subject" id="subject" required>
+                    <option disabled selected>Subject</option>
+                    <option value="math">Mathematics</option>
+                    <option value="english">English</option>
+                    <option value="science">Science</option>
+                    <option value="history">History</option>
+                    <option value="geography">Geography</option>
+                    <option value="physics">Physics</option>
+                    <option value="chemistry">Chemistry</option>
+                    <option value="biology">Biology</option>
+                    <option value="art">Art</option>
+                    <option value="music">Music</option>
+                    <option value="computer_science">Computer Science</option>
+                    <option value="foreign_language">Foreign Language</option>
+                    <option value="economics">Economics</option>
+                    <option value="philosophy">Philosophy</option>
+                    <option value="psychology">Psychology</option>
+                    <option value="sociology">Sociology</option>
+                    <option value="business_studies">Business Studies</option>
+                    <option value="drama">Drama</option>
+                    <option value="home_economics">Home Economics</option>
+                    <option value="technology">Technology</option>
+                </select>
+                <div id="subject-feedback" class="invalid-feedback visually-hidden">
+                    Please select subject.
+                </div>
+            </div>
+            <!--                    <label for="grade">Select Grade</label>-->
+            <div class="mb-4">
+                <select class="form-control mb-4" id="grade" name="grades" required>
+                    <option disabled selected>Grade</option>
+                    <option value="6">6th Grade</option>
+                    <option value="7">7th Grade</option>
+                    <option value="8">8th Grade</option>
+                    <option value="9">9th Grade (Freshman)</option>
+                    <option value="10">10th Grade (Sophomore)</option>
+                    <option value="11">11th Grade (Junior)</option>
+                    <option value="12">12th Grade (Senior)</option>
+                    <option value="college_freshman">College Freshman</option>
+                    <option value="college_sophomore">College Sophomore</option>
+                    <option value="college_junior">College Junior</option>
+                    <option value="college_senior">College Senior</option>
+                    <option value="graduate">Graduate School</option>
+                </select>
+                <div id="grade-feedback" class="invalid-feedback visually-hidden">
+                    Please select grade level.
+                </div>
+            </div>
+            <!--                    <label for="quantity">Select Quantity</label>-->
+            <div class="mb-4">
+                <input type="number" class="form-control mb-4" id="quantity" name="quantity" min="1"
+                       placeholder="Quantity"
+                       required>
+                <div id="quantity-feedback" class="invalid-feedback visually-hidden">
+                    Please enter quantity.
+                </div>
+            </div>
+            <!--                    <label for="details">Add Details</label>-->
+            <input type="text" class="form-control mb-4" id="details" name="details" placeholder="Details">
+
+            <!--                    <label for="select-create">Create Button</label>-->
+            <button type="submit" class="btn btn-light p-3 px-5" id="create">
+                <span class="spinner-border spinner-border-sm visually-hidden" role="status"
+                      id="select-spinner"> </span>
+                <span id="select-btn-text">Create</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("create").addEventListener("click", fetchSelectData);
+    let quantity
+    let conversation
+    let next_window
+    let key
+
+    // i can't tell whether this works or not (need to change for both....)
+    window.addEventListener("keydown", function (e) {
+        if (e.code == 'Enter') {
+            fetchSelectData(e)
+        }
+    })
+
+    function fetchSelectData(event) {
+        // it might need to reload between prompts idk
+        event.preventDefault();
+
+        let subject, grade, details
+
+        let type = document.getElementById('select-type').innerText
+        console.log(type)
+        if (type == 'Flashcards') {
+            conversation = [
+                {
+                    "role": "system", "content": "Generate a number of question answer sets as specified by user, " +
+                        "on a specific topic and level specified by the user. Also generate a title and description " +
+                        "for the set of questions. They will be provided in the format quantity + 'notes'. Return " +
+                        "JSON. The JSON should have a key named type for which the value should be 'Flashcards', a key " +
+                        "named title for the title, a key named description for " +
+                        "the description, a key named quantity for which the value should be the quantity inputted by " +
+                        "the user, and a key named 'questions', for which the value is an array consisting of a key " +
+                        "called 'question' and a key called 'answer'. Return JSON."
+                }
+            ]
+            next_window = '/terms-preview'
+            key = 'set'
+        } else {
+            conversation = [
+                {
+                    "role": "system", "content": "Generate a number of quiz questions each with four answer options, " +
+                        "one of which should be correct, as specified by user, on a specific topic and level specified " +
+                        "by the user. They will be provided in the format quantity grade subject, plus optional details. " +
+                        "Also generate a title and description for the set of questions. Return JSON. The JSON should " +
+                        "have a key named type for which the value should be 'Quiz', a key named title for the title, a " +
+                        "key named description for the description, a key named quantity for which the value should be " +
+                        "the quantity inputted by the user, and a key named 'questions', for which the value is " +
+                        "an array consisting of a key called 'question', one key called 'correct_answer', and a key " +
+                        "called 'wrong_answers'. Return JSON."
+                }
+            ]
+            next_window = '/quiz'
+            key = 'quiz'
+        }
+
+        let subjectInput = document.getElementById("subject")
+        if (subjectInput.value == "Subject") {
+            subjectInput.classList.add('is-invalid')
+            document.getElementById('subject-feedback').classList.remove('visually-hidden')
+            throw new Error("Subject required.")
+        } else {
+            subject = subjectInput.value
+            subjectInput.classList.remove('is-invalid')
+            document.getElementById('subject-feedback').classList.add('visually-hidden')
+        }
+        let gradeInput = document.getElementById("grade")
+        if (gradeInput.value == "Grade") {
+            gradeInput.classList.add('is-invalid')
+            document.getElementById('grade-feedback').classList.remove('visually-hidden')
+            throw new Error("Grade required.")
+        } else {
+            grade = gradeInput.value
+            gradeInput.classList.remove('is-invalid')
+            document.getElementById('grade-feedback').classList.add('visually-hidden')
+        }
+        let quantityInput = document.getElementById("quantity")
+        if (quantityInput.value == "") {
+            quantityInput.classList.add('is-invalid')
+            document.getElementById('quantity-feedback').classList.remove('visually-hidden')
+            throw new Error("Quantity required.")
+        } else {
+            quantity = quantityInput.value
+            quantityInput.classList.remove('is-invalid')
+            document.getElementById('quantity-feedback').classList.add('visually-hidden')
+        }
+        let detailsInput = document.getElementById('details')
+        details = detailsInput.value
+
+        subjectInput.value = ""
+        gradeInput.value = ""
+        quantityInput.value = ""
+        detailsInput.value = ""
+
+
+        let text = document.getElementById("select-btn-text");
+        text.innerText = "";
+        let span = document.getElementById("select-spinner");
+        span.classList.remove("visually-hidden")
+
+        let prompt = quantity.concat(" ", grade, " ", subject, " ", details);
+        console.log(prompt);
+
+        createSet(conversation, prompt)
+    }
+
+    function createSet(conversation, input) {
+        conversation.push({"role": "user", "content": input})
+        fetch('/chat?prompt=' + JSON.stringify(conversation))
+            .then(response => {
+                return response.json();
+            })
+            .then(jsonData => {
+                for (let i = 0; i < quantity; i++) {
+                    console.log("question: " + jsonData.questions[i].question);
+                    console.log("answer: " + jsonData.questions[i].answer);
+                }
+
+                saveJson(jsonData)
+
+            })
+            .catch(error => {
+                console.error("Error fetching JSON:", error);
+            });
+    }
+
+    function saveJson(json) {
+        fetch('/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(json)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                openJson(data.filename)
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    function openJson(filename) {
+        fetch('/open/' + filename, {
+            method: 'GET'
+        })
+            .then(response => response.json())
+            .then(data => {
+                localStorage.setItem(key, JSON.stringify(data))
+                window.location.href = next_window
+            })
+            .catch((error) => {
+                console.error('Error:', error)
+            });
+    }
+
+</script>
+{% endblock %}
