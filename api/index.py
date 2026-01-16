@@ -282,16 +282,11 @@ def open_json(identifier):
     try:
         # URL decode and remove .json extension
         title = unquote(identifier).replace('.json', '')
-        print(f"DEBUG open_json: identifier={identifier}, title={title}, user_id={user_id}")
 
         result = supabase.table('study_sets').select('*').eq('user_id', user_id).eq('title', title).execute()
-        print(f"DEBUG open_json: result.data={result.data}")
 
         if not result.data:
-            # Also try case-insensitive search for debugging
-            all_sets = supabase.table('study_sets').select('title, user_id').eq('user_id', user_id).execute()
-            print(f"DEBUG open_json: all user sets={all_sets.data}")
-            return jsonify({"error": "Study set not found", "searched_title": title, "user_id": user_id}), 404
+            return jsonify({"error": "Study set not found"}), 404
 
         study_set = result.data[0]
 
