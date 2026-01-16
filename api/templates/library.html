@@ -188,7 +188,7 @@ Library
     }
 
     async function getHeaders() {
-        const response = await fetch('/list-jsons')
+        const response = await authFetch('/list-jsons')
         if (!response.ok) {
             throw new Error('Network response was not ok')
         }
@@ -214,7 +214,7 @@ Library
 
     async function openJson(name) {
         let filename = name + ".json"
-        const response = await fetch('/open/' + filename)
+        const response = await authFetch('/open/' + filename)
         if (!response.ok) {
             throw new Error('Network response was not ok')
         }
@@ -240,7 +240,7 @@ Library
 
     async function deleteJson(name) {
         let filename = name + '.json'
-        const response = await fetch('/delete/' + filename)
+        const response = await authFetch('/delete/' + filename)
         if (!response.ok) {
             throw new Error('Network response not ok')
         }

@@ -158,56 +158,49 @@ Create {{ type }}
         createSet(conversation, prompt)
     }
 
-    function createSet(conversation, input) {
+    async function createSet(conversation, input) {
         conversation.push({"role": "user", "content": input})
-        fetch('/chat?prompt=' + JSON.stringify(conversation))
-            .then(response => {
-                return response.json();
-            })
-            .then(jsonData => {
-                for (let i = 0; i < quantity; i++) {
-                    console.log("question: " + jsonData.questions[i].question);
-                    console.log("answer: " + jsonData.questions[i].answer);
-                }
-
-                saveJson(jsonData)
-
-            })
-            .catch(error => {
-                console.error("Error fetching JSON:", error);
-            });
+        try {
+            const response = await authFetch('/chat?prompt=' + JSON.stringify(conversation))
+            const jsonData = await response.json();
+            for (let i = 0; i < jsonData.questions.length; i++) {
+                console.log("question: " + jsonData.questions[i].question);
+                console.log("answer: " + jsonData.questions[i].answer);
+            }
+            saveJson(jsonData)
+        } catch (error) {
+            console.error("Error fetching JSON:", error);
+        }
     }
 
-    function saveJson(json) {
-        fetch('/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(json)
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                openJson(data.filename)
+    async function saveJson(json) {
+        try {
+            const response = await authFetch('/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(json)
             })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+            const data = await response.json();
+            console.log('Success:', data);
+            openJson(data.filename)
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
 
-    function openJson(filename) {
-        fetch('/open/' + filename, {
-            method: 'GET'
-        })
-            .then(response => response.json())
-            .then(data => {
-                localStorage.setItem(key, JSON.stringify(data))
-                window.location.href = next_window
+    async function openJson(filename) {
+        try {
+            const response = await authFetch('/open/' + filename, {
+                method: 'GET'
             })
-            .catch((error) => {
-                console.error('Error:', error)
-            });
+            const data = await response.json();
+            localStorage.setItem(key, JSON.stringify(data))
+            window.location.href = next_window
+        } catch (error) {
+            console.error('Error:', error)
+        }
     }
 
 

@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Sign Up - Quizme
+{% endblock %}
+
+{% block main %}
+<div class="container mt-5 d-flex flex-column justify-content-center">
+    <div class="shadow-lg bg-body rounded p-5" style="max-width: 400px; margin: auto;">
+        <h1 class="mb-4 text-center">Sign Up</h1>
+        <form id="signup-form">
+            <div class="mb-3">
+                <input type="email" class="form-control" id="email" placeholder="Email" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Password" minlength="6" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" id="confirm-password" placeholder="Confirm Password" required>
+            </div>
+            <div id="error-message" class="text-danger mb-3" style="display: none;"></div>
+            <div id="success-message" class="text-success mb-3" style="display: none;"></div>
+            <button type="submit" class="btn btn-light w-100 p-3">
+                <span class="spinner-border spinner-border-sm visually-hidden" id="signup-spinner"></span>
+                <span id="signup-btn-text">Sign Up</span>
+            </button>
+        </form>
+        <p class="mt-3 text-center">Already have an account? <a href="/login">Login</a></p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('signup-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+        const spinner = document.getElementById('signup-spinner');
+        const btnText = document.getElementById('signup-btn-text');
+
+        if (password !== confirmPassword) {
+            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        spinner.classList.remove('visually-hidden');
+        btnText.textContent = '';
+        errorDiv.style.display = 'none';
+
+        try {
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+
+            if (error) throw error;
+
+            if (data.session) {
+                // Auto-confirmed, redirect to home
+                window.location.href = '/';
+            } else {
+                // Email confirmation required
+                successDiv.textContent = 'Check your email for a confirmation link!';
+                successDiv.style.display = 'block';
+                spinner.classList.add('visually-hidden');
+                btnText.textContent = 'Sign Up';
+            }
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+            spinner.classList.add('visually-hidden');
+            btnText.textContent = 'Sign Up';
+        }
+    });
+
+    // Check if already logged in
+    async function checkSession() {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            window.location.href = '/';
+        }
+    }
+    checkSession();
+</script>
+{% endblock %}

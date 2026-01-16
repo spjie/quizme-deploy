@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Login - Quizme
+{% endblock %}
+
+{% block main %}
+<div class="container mt-5 d-flex flex-column justify-content-center">
+    <div class="shadow-lg bg-body rounded p-5" style="max-width: 400px; margin: auto;">
+        <h1 class="mb-4 text-center">Login</h1>
+        <form id="login-form">
+            <div class="mb-3">
+                <input type="email" class="form-control" id="email" placeholder="Email" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Password" required>
+            </div>
+            <div id="error-message" class="text-danger mb-3" style="display: none;"></div>
+            <button type="submit" class="btn btn-light w-100 p-3">
+                <span class="spinner-border spinner-border-sm visually-hidden" id="login-spinner"></span>
+                <span id="login-btn-text">Login</span>
+            </button>
+        </form>
+        <p class="mt-3 text-center">Don't have an account? <a href="/signup">Sign up</a></p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('error-message');
+        const spinner = document.getElementById('login-spinner');
+        const btnText = document.getElementById('login-btn-text');
+
+        spinner.classList.remove('visually-hidden');
+        btnText.textContent = '';
+        errorDiv.style.display = 'none';
+
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) throw error;
+
+            // Redirect to home
+            window.location.href = '/';
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+            spinner.classList.add('visually-hidden');
+            btnText.textContent = 'Login';
+        }
+    });
+
+    // Check if already logged in
+    async function checkSession() {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            window.location.href = '/';
+        }
+    }
+    checkSession();
+</script>
+{% endblock %}
