@@ -2,11 +2,18 @@ from openai import OpenAI
 from flask import Flask, render_template, request, jsonify, g
 from supabase import create_client, Client
 from functools import wraps
+from urllib.parse import unquote
 import json
 import os
 
 app = Flask(__name__)
-openAIClient = OpenAI()
+
+# Initialize clients safely
+try:
+    openAIClient = OpenAI()
+except Exception as e:
+    print(f"Warning: OpenAI client initialization failed: {e}")
+    openAIClient = None
 
 # Supabase client initialization
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
@@ -14,7 +21,12 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 
 # Use service role key for backend operations (bypasses RLS)
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY else None
+supabase: Client = None
+if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    except Exception as e:
+        print(f"Warning: Supabase client initialization failed: {e}")
 
 
 # Context processor to inject Supabase config into all templates
@@ -268,8 +280,8 @@ def open_json(identifier):
     user_id = str(g.user.id)
 
     try:
-        # Try to find by title (remove .json extension if present)
-        title = identifier.replace('.json', '')
+        # URL decode and remove .json extension
+        title = unquote(identifier).replace('.json', '')
         print(f"DEBUG open_json: identifier={identifier}, title={title}, user_id={user_id}")
 
         result = supabase.table('study_sets').select('*').eq('user_id', user_id).eq('title', title).execute()
@@ -326,7 +338,7 @@ def list_jsons():
 def delete_json(identifier):
     """Delete a study set by title"""
     user_id = str(g.user.id)
-    title = identifier.replace('.json', '')
+    title = unquote(identifier).replace('.json', '')
 
     try:
         # Delete by title (cascades to questions due to foreign key)
