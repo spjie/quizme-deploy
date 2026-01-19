@@ -1,10 +1,19 @@
 {
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/.next",
+  "framework": "nextjs",
   "build": {
     "env": {
       "PYTHON_VERSION": "3.12"
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
+    { "source": "/api/:path*", "destination": "/api/index" },
+    { "source": "/auth/:path*", "destination": "/api/index" },
+    { "source": "/save", "destination": "/api/index" },
+    { "source": "/open/:path*", "destination": "/api/index" },
+    { "source": "/list-jsons", "destination": "/api/index" },
+    { "source": "/delete/:path*", "destination": "/api/index" },
+    { "source": "/chat", "destination": "/api/index" }
   ]
 }
