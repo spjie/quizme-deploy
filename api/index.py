@@ -1,5 +1,6 @@
 from openai import OpenAI
-from flask import Flask, render_template, request, jsonify, g
+from flask import Flask, request, jsonify, g
+from flask_cors import CORS
 from supabase import create_client, Client
 from functools import wraps
 from urllib.parse import unquote
@@ -7,6 +8,13 @@ import json
 import os
 
 app = Flask(__name__)
+
+# Enable CORS for Next.js frontend
+CORS(app, origins=[
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'https://*.vercel.app',
+], supports_credentials=True)
 
 # Initialize clients safely
 try:
@@ -29,15 +37,6 @@ if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
         print(f"Warning: Supabase client initialization failed: {e}")
 
 
-# Context processor to inject Supabase config into all templates
-@app.context_processor
-def inject_supabase_config():
-    return {
-        'supabase_url': SUPABASE_URL or '',
-        'supabase_anon_key': SUPABASE_ANON_KEY or ''
-    }
-
-
 # Authentication decorator
 def require_auth(f):
     @wraps(f)
@@ -58,86 +57,11 @@ def require_auth(f):
     return decorated_function
 
 
-# ============ Page Routes ============
+# ============ API Health Check ============
 
-@app.route('/')
-def home():
-    return render_template("index.html")
-
-
-@app.route('/login')
-def login_page():
-    return render_template("login.html")
-
-
-@app.route('/signup')
-def signup_page():
-    return render_template("signup.html")
-
-
-@app.route('/terms-preview')
-def terms_preview():
-    return render_template("terms-preview.html")
-
-
-@app.route('/select/<type>')
-def select(type):
-    return render_template("select.html", type=type)
-
-
-@app.route('/notes/<type>')
-def terms_notes(type):
-    return render_template("notes.html", type=type)
-
-
-@app.route('/quiz-preview')
-def quiz_preview():
-    return render_template("quiz-preview.html")
-
-
-@app.route('/quiz-select')
-def quiz_select():
-    return render_template("quiz-select.html")
-
-
-@app.route('/quiz-notes')
-def quiz_notes():
-    return render_template("quiz-notes.html")
-
-
-@app.route('/library/<page>')
-def library(page):
-    return render_template("library.html", page=page)
-
-
-@app.route('/study')
-def study():
-    return render_template("study.html")
-
-
-@app.route('/learn')
-def learn():
-    return render_template("learn.html")
-
-
-@app.route('/terms-quiz')
-def terms_quiz():
-    return render_template("terms-quiz.html")
-
-
-@app.route('/quiz')
-def quiz():
-    return render_template("quiz.html")
-
-
-@app.route('/edit')
-def edit():
-    return render_template("edit.html")
-
-
-@app.route('/test')
-def test():
-    return render_template("test.html")
+@app.route('/api/health')
+def health_check():
+    return jsonify({"status": "ok"}), 200
 
 
 # ============ Auth Routes ============
@@ -227,7 +151,9 @@ def save_json():
         return jsonify({"error": "Invalid JSON data or missing title"}), 400
 
     user_id = str(g.user.id)
-    set_type = data.get('type', 'Flashcards')
+    set_type_raw = data.get('type', 'flashcards').lower()
+    # Map to database expected values (capitalized)
+    set_type_db = 'Flashcards' if set_type_raw == 'flashcards' else 'Quiz'
 
     try:
         # Insert study set
@@ -235,7 +161,7 @@ def save_json():
             "user_id": user_id,
             "title": data['title'],
             "description": data.get('description', ''),
-            "type": set_type,
+            "type": set_type_db,
             "quantity": data.get('quantity', len(data.get('questions', [])))
         }
 
@@ -244,7 +170,7 @@ def save_json():
 
         # Insert questions based on type
         questions = data.get('questions', [])
-        if set_type == 'Flashcards':
+        if set_type_raw == 'flashcards':
             for idx, q in enumerate(questions):
                 supabase.table('flashcard_questions').insert({
                     "study_set_id": study_set_id,
@@ -258,7 +184,7 @@ def save_json():
                     "study_set_id": study_set_id,
                     "question": q['question'],
                     "correct_answer": q['correct_answer'],
-                    "wrong_answers": q['wrong_answers'],
+                    "wrong_answers": q.get('incorrect_answers', q.get('wrong_answers', [])),
                     "position": idx
                 }).execute()
 
@@ -290,17 +216,22 @@ def open_json(identifier):
 
         study_set = result.data[0]
 
-        # Fetch questions based on type
-        if study_set['type'] == 'Flashcards':
-            questions_result = supabase.table('flashcard_questions').select('*').eq('study_set_id', study_set['id']).order('position').execute()
-            questions = [{"question": q['question'], "answer": q['answer']} for q in questions_result.data]
+        # Try to fetch flashcard questions first
+        fc_questions = supabase.table('flashcard_questions').select('*').eq('study_set_id', study_set['id']).order('position').execute()
+
+        # If flashcard questions exist, this is a flashcard set
+        if fc_questions.data:
+            actual_type = 'flashcards'
+            questions = [{"question": q['question'], "answer": q['answer']} for q in fc_questions.data]
         else:
-            questions_result = supabase.table('quiz_questions').select('*').eq('study_set_id', study_set['id']).order('position').execute()
-            questions = [{"question": q['question'], "correct_answer": q['correct_answer'], "wrong_answers": q['wrong_answers']} for q in questions_result.data]
+            # Otherwise, try quiz questions
+            qz_questions = supabase.table('quiz_questions').select('*').eq('study_set_id', study_set['id']).order('position').execute()
+            actual_type = 'quiz'
+            questions = [{"question": q['question'], "correct_answer": q['correct_answer'], "incorrect_answers": q['wrong_answers']} for q in qz_questions.data]
 
         return jsonify({
             "id": study_set['id'],
-            "type": study_set['type'],
+            "type": actual_type,
             "title": study_set['title'],
             "description": study_set['description'],
             "quantity": study_set['quantity'],
@@ -318,11 +249,29 @@ def list_jsons():
     user_id = str(g.user.id)
 
     try:
-        result = supabase.table('study_sets').select('title, type').eq('user_id', user_id).execute()
+        result = supabase.table('study_sets').select('id, title, description, type').eq('user_id', user_id).order('created_at', desc=True).execute()
 
-        # Return as list of filenames for backward compatibility
-        filenames = [item['title'] + '.json' for item in result.data]
-        return jsonify(filenames), 200
+        files = []
+        for item in result.data:
+            # Detect actual type based on which table has questions
+            actual_type = item['type']
+
+            # Check if flashcard_questions exist for this set
+            fc_check = supabase.table('flashcard_questions').select('id').eq('study_set_id', item['id']).limit(1).execute()
+            qz_check = supabase.table('quiz_questions').select('id').eq('study_set_id', item['id']).limit(1).execute()
+
+            if fc_check.data and not qz_check.data:
+                actual_type = 'flashcards'
+            elif qz_check.data and not fc_check.data:
+                actual_type = 'quiz'
+
+            files.append({
+                "title": item['title'],
+                "description": item.get('description', ''),
+                "type": actual_type
+            })
+
+        return jsonify({"files": files}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -351,15 +300,36 @@ def delete_json(identifier):
 @app.route('/chat')
 @require_auth
 def select_chat_completion():
+    """Generate AI content using OpenAI"""
     prompt = request.args.get('prompt')
-    messages = json.loads(prompt)
-    completion = openAIClient.chat.completions.create(
-        model="gpt-3.5-turbo",
-        response_format={"type": "json_object"},
-        messages=messages
-    )
-    return completion.choices[0].message.content
+
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+
+    if not openAIClient:
+        return jsonify({"error": "OpenAI client not initialized"}), 500
+
+    try:
+        # Parse prompt as JSON if it looks like a message array, otherwise create one
+        try:
+            messages = json.loads(prompt)
+        except json.JSONDecodeError:
+            # If it's a plain text prompt, wrap it in a message format
+            messages = [{"role": "user", "content": prompt}]
+
+        completion = openAIClient.chat.completions.create(
+            model="gpt-3.5-turbo",
+            response_format={"type": "json_object"},
+            messages=messages
+        )
+
+        return jsonify({
+            "response": completion.choices[0].message.content
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=3000)
