@@ -8,13 +8,15 @@
       "PYTHON_VERSION": "3.12"
     }
   },
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/auth/:path*", "destination": "/api/index" },
-    { "source": "/save", "destination": "/api/index" },
-    { "source": "/open/:path*", "destination": "/api/index" },
-    { "source": "/list-jsons", "destination": "/api/index" },
-    { "source": "/delete/:path*", "destination": "/api/index" },
-    { "source": "/chat", "destination": "/api/index" }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/auth/(.*)", "dest": "/api/index.py" },
+    { "src": "/save", "dest": "/api/index.py" },
+    { "src": "/open/(.*)", "dest": "/api/index.py" },
+    { "src": "/list-jsons", "dest": "/api/index.py" },
+    { "src": "/delete/(.*)", "dest": "/api/index.py" },
+    { "src": "/chat", "dest": "/api/index.py" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
 }
