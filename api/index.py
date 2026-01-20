@@ -151,9 +151,6 @@ def save_json():
         return jsonify({"error": "Invalid JSON data or missing title"}), 400
 
     user_id = str(g.user.id)
-    set_type_raw = data.get('type', 'flashcards').lower()
-    # Map to database expected values (capitalized)
-    set_type_db = 'Flashcards' if set_type_raw == 'flashcards' else 'Quiz'
 
     try:
         # Insert study set
@@ -161,32 +158,22 @@ def save_json():
             "user_id": user_id,
             "title": data['title'],
             "description": data.get('description', ''),
-            "type": set_type_db,
+            "type": 'Flashcards',
             "quantity": data.get('quantity', len(data.get('questions', [])))
         }
 
         result = supabase.table('study_sets').insert(study_set_data).execute()
         study_set_id = result.data[0]['id']
 
-        # Insert questions based on type
+        # Insert flashcard questions
         questions = data.get('questions', [])
-        if set_type_raw == 'flashcards':
-            for idx, q in enumerate(questions):
-                supabase.table('flashcard_questions').insert({
-                    "study_set_id": study_set_id,
-                    "question": q['question'],
-                    "answer": q['answer'],
-                    "position": idx
-                }).execute()
-        else:  # Quiz
-            for idx, q in enumerate(questions):
-                supabase.table('quiz_questions').insert({
-                    "study_set_id": study_set_id,
-                    "question": q['question'],
-                    "correct_answer": q['correct_answer'],
-                    "wrong_answers": q.get('incorrect_answers', q.get('wrong_answers', [])),
-                    "position": idx
-                }).execute()
+        for idx, q in enumerate(questions):
+            supabase.table('flashcard_questions').insert({
+                "study_set_id": study_set_id,
+                "question": q['question'],
+                "answer": q['answer'],
+                "position": idx
+            }).execute()
 
         return jsonify({
             "message": "Study set saved successfully",
@@ -216,22 +203,13 @@ def open_json(identifier):
 
         study_set = result.data[0]
 
-        # Try to fetch flashcard questions first
+        # Fetch flashcard questions
         fc_questions = supabase.table('flashcard_questions').select('*').eq('study_set_id', study_set['id']).order('position').execute()
-
-        # If flashcard questions exist, this is a flashcard set
-        if fc_questions.data:
-            actual_type = 'flashcards'
-            questions = [{"question": q['question'], "answer": q['answer']} for q in fc_questions.data]
-        else:
-            # Otherwise, try quiz questions
-            qz_questions = supabase.table('quiz_questions').select('*').eq('study_set_id', study_set['id']).order('position').execute()
-            actual_type = 'quiz'
-            questions = [{"question": q['question'], "correct_answer": q['correct_answer'], "incorrect_answers": q['wrong_answers']} for q in qz_questions.data]
+        questions = [{"question": q['question'], "answer": q['answer']} for q in fc_questions.data]
 
         return jsonify({
             "id": study_set['id'],
-            "type": actual_type,
+            "type": 'flashcards',
             "title": study_set['title'],
             "description": study_set['description'],
             "quantity": study_set['quantity'],
@@ -253,22 +231,10 @@ def list_jsons():
 
         files = []
         for item in result.data:
-            # Detect actual type based on which table has questions
-            actual_type = item['type']
-
-            # Check if flashcard_questions exist for this set
-            fc_check = supabase.table('flashcard_questions').select('id').eq('study_set_id', item['id']).limit(1).execute()
-            qz_check = supabase.table('quiz_questions').select('id').eq('study_set_id', item['id']).limit(1).execute()
-
-            if fc_check.data and not qz_check.data:
-                actual_type = 'flashcards'
-            elif qz_check.data and not fc_check.data:
-                actual_type = 'quiz'
-
             files.append({
                 "title": item['title'],
                 "description": item.get('description', ''),
-                "type": actual_type
+                "type": 'flashcards'
             })
 
         return jsonify({"files": files}), 200

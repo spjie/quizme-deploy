@@ -67,7 +67,7 @@ function FlashcardPreviewContent() {
       <AuthGuard>
         <div className="max-w-2xl mx-auto px-4 py-8 text-center">
           <p className="text-red-500 mb-4">{error || 'Study set not found'}</p>
-          <Link href="/library/All" className="btn-primary">
+          <Link href="/library" className="btn-primary">
             Back to Library
           </Link>
         </div>
@@ -79,7 +79,7 @@ function FlashcardPreviewContent() {
     <AuthGuard>
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <Link href="/library/All" className="text-primary hover:underline mb-4 inline-block">
+          <Link href="/library" className="text-primary hover:underline mb-4 inline-block">
             ← Back to Library
           </Link>
           <h1 className="text-3xl font-bold text-primary mb-2">{studySet.title}</h1>

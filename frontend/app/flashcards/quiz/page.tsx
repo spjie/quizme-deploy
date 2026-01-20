@@ -138,7 +138,7 @@ function FlashcardQuizContent() {
       <AuthGuard>
         <div className="max-w-2xl mx-auto px-4 py-8 text-center">
           <p className="text-red-500 mb-4">{error || 'Study set not found'}</p>
-          <Link href="/library/All" className="btn-primary">
+          <Link href="/library" className="btn-primary">
             Back to Library
           </Link>
         </div>

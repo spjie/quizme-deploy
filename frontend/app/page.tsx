@@ -22,7 +22,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {user ? (
                 <>
-                  <Link href="/library/All" className="btn-primary text-lg px-8 py-3">
+                  <Link href="/library" className="btn-primary text-lg px-8 py-3">
                     Go to Library
                   </Link>
                   <Link href="/create/flashcards/select" className="btn-outline text-lg px-8 py-3">

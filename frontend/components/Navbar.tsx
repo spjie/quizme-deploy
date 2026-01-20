@@ -2,24 +2,15 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import CreateModal from './CreateModal'
 
 export default function Navbar() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [createType, setCreateType] = useState<'flashcards' | 'quiz'>('flashcards')
 
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
-  }
-
-  const openCreateModal = (type: 'flashcards' | 'quiz') => {
-    setCreateType(type)
-    setShowCreateModal(true)
   }
 
   return (
@@ -47,22 +38,22 @@ export default function Navbar() {
                       </svg>
                     </button>
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                      <button
-                        onClick={() => openCreateModal('flashcards')}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-primary"
+                      <Link
+                        href="/create/flashcards/select"
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-primary"
                       >
-                        Flashcards
-                      </button>
-                      <button
-                        onClick={() => openCreateModal('quiz')}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-primary"
+                        Select
+                      </Link>
+                      <Link
+                        href="/create/flashcards/notes"
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-primary"
                       >
-                        Quiz
-                      </button>
+                        Notes
+                      </Link>
                     </div>
                   </div>
 
-                  <Link href="/library/All" className="text-primary hover:text-primary-dark font-medium">
+                  <Link href="/library" className="text-primary hover:text-primary-dark font-medium">
                     Library
                   </Link>
 
@@ -87,13 +78,6 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-
-      {showCreateModal && (
-        <CreateModal
-          type={createType}
-          onClose={() => setShowCreateModal(false)}
-        />
-      )}
     </>
   )
 }

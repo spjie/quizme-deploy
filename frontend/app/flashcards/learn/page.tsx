@@ -33,7 +33,7 @@ function LearnContent() {
                 ← Back to Set
               </Link>
             ) : (
-              <Link href="/library/All" className="btn-outline">
+              <Link href="/library" className="btn-outline">
                 ← Back to Library
               </Link>
             )}

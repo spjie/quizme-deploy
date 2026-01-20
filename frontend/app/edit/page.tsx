@@ -147,7 +147,7 @@ function EditContent() {
       <AuthGuard>
         <div className="max-w-2xl mx-auto px-4 py-8 text-center">
           <p className="text-red-500 mb-4">{error}</p>
-          <Link href="/library/All" className="btn-primary">
+          <Link href="/library" className="btn-primary">
             Back to Library
           </Link>
         </div>
@@ -161,7 +161,7 @@ function EditContent() {
     <AuthGuard>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <Link href="/library/All" className="text-primary hover:underline mb-4 inline-block">
+          <Link href="/library" className="text-primary hover:underline mb-4 inline-block">
             ← Back to Library
           </Link>
           <h1 className="text-3xl font-bold text-primary">Edit Study Set</h1>
@@ -290,7 +290,7 @@ function EditContent() {
 
           {/* Save Button */}
           <div className="flex gap-4">
-            <Link href="/library/All" className="btn-outline flex-1 text-center">
+            <Link href="/library" className="btn-outline flex-1 text-center">
               Cancel
             </Link>
             <button

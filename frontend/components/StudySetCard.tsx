@@ -6,18 +6,14 @@ import Link from 'next/link'
 type StudySetCardProps = {
   title: string
   description: string
-  type: 'flashcards' | 'quiz'
   onDelete: () => void
 }
 
-export default function StudySetCard({ title, description, type, onDelete }: StudySetCardProps) {
+export default function StudySetCard({ title, description, onDelete }: StudySetCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-  const previewLink = type === 'flashcards'
-    ? `/flashcards/preview?title=${encodeURIComponent(title)}`
-    : `/quiz/play?title=${encodeURIComponent(title)}`
-
+  const previewLink = `/flashcards/preview?title=${encodeURIComponent(title)}`
   const editLink = `/edit?title=${encodeURIComponent(title)}`
 
   return (
@@ -58,15 +54,6 @@ export default function StudySetCard({ title, description, type, onDelete }: Stu
 
         <Link href={previewLink}>
           <div className="pr-12">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                type === 'flashcards'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-purple-100 text-purple-700'
-              }`}>
-                {type === 'flashcards' ? 'Flashcards' : 'Quiz'}
-              </span>
-            </div>
             <h3 className="text-lg font-semibold text-primary mb-2">{title}</h3>
             <p className="text-gray-600 text-sm line-clamp-2">{description}</p>
           </div>
