@@ -3,12 +3,25 @@
 *.pyc
 __pycache__
 
-# Environments 
-.env 
-.venv 
-env/ 
-venv/ 
-ENV/ 
-env.bak/ 
-venv.bak/ 
+# Environments
+.env
+.venv
+env/
+venv/
+venv312/
+ENV/
+env.bak/
+venv.bak/
 .env*.local
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+next-env.d.ts
+
+# Python
+uv.lock
+pyproject.toml
+.python-version

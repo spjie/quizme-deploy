@@ -11,30 +11,39 @@ app = Flask(__name__)
 
 # Enable CORS for Next.js frontend
 CORS(app, origins=[
-    'http://localhost:3001',
     'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3003',
     'https://*.vercel.app',
 ], supports_credentials=True)
 
 # Initialize clients safely
+openai_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('NEXT_OPENAI_API_KEY')
 try:
-    openAIClient = OpenAI()
+    if openai_key:
+        openAIClient = OpenAI(api_key=openai_key)
+    else:
+        openAIClient = None
+        print("Warning: No OpenAI API key found")
 except Exception as e:
     print(f"Warning: OpenAI client initialization failed: {e}")
     openAIClient = None
 
 # Supabase client initialization
-SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
-SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+# Support both NEXT_PUBLIC_ prefixed and non-prefixed env vars
+SUPABASE_URL = os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or os.environ.get('NEXT_PUBLIC_SERVICE_ROLE_KEY')
 
-# Use service role key for backend operations (bypasses RLS)
+# Use service role key if available, otherwise fall back to anon key
 supabase: Client = None
-if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    except Exception as e:
-        print(f"Warning: Supabase client initialization failed: {e}")
+if SUPABASE_URL:
+    key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
+    if key:
+        try:
+            supabase = create_client(SUPABASE_URL, key)
+        except Exception as e:
+            print(f"Warning: Supabase client initialization failed: {e}")
 
 
 # Authentication decorator
@@ -61,7 +70,12 @@ def require_auth(f):
 
 @app.route('/api/health')
 def health_check():
-    return jsonify({"status": "ok"}), 200
+    return jsonify({
+        "status": "ok",
+        "openai_initialized": openAIClient is not None,
+        "supabase_initialized": supabase is not None,
+        "has_service_role_key": bool(SUPABASE_SERVICE_ROLE_KEY)
+    }), 200
 
 
 # ============ Auth Routes ============

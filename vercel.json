@@ -1,22 +1,16 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm install",
-  "framework": null,
+  "framework": "nextjs",
   "build": {
     "env": {
       "PYTHON_VERSION": "3.12"
     }
   },
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.py" },
-    { "src": "/auth/(.*)", "dest": "/api/index.py" },
-    { "src": "/save", "dest": "/api/index.py" },
-    { "src": "/open/(.*)", "dest": "/api/index.py" },
-    { "src": "/list-jsons", "dest": "/api/index.py" },
-    { "src": "/delete/(.*)", "dest": "/api/index.py" },
-    { "src": "/chat", "dest": "/api/index.py" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/frontend/$1" }
+  "rewrites": [
+    { "source": "/auth/:path*", "destination": "/api/index.py" },
+    { "source": "/save", "destination": "/api/index.py" },
+    { "source": "/open/:path*", "destination": "/api/index.py" },
+    { "source": "/list-jsons", "destination": "/api/index.py" },
+    { "source": "/delete/:path*", "destination": "/api/index.py" },
+    { "source": "/chat", "destination": "/api/index.py" }
   ]
 }
