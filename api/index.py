@@ -15,6 +15,7 @@ CORS(app, origins=[
     'http://localhost:3001',
     'http://localhost:3003',
     'https://*.vercel.app',
+    'null',  # Allow file:// for local testing
 ], supports_credentials=True)
 
 # Initialize clients safely
@@ -309,6 +310,53 @@ def select_chat_completion():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/chat/stream')
+@require_auth
+def stream_chat_completion():
+    """Stream AI content generation using OpenAI"""
+    from flask import Response, stream_with_context
+
+    prompt = request.args.get('prompt')
+
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+
+    if not openAIClient:
+        return jsonify({"error": "OpenAI client not initialized"}), 500
+
+    def generate():
+        try:
+            # Parse prompt as JSON if it looks like a message array
+            try:
+                messages = json.loads(prompt)
+            except json.JSONDecodeError:
+                messages = [{"role": "user", "content": prompt}]
+
+            stream = openAIClient.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                stream=True
+            )
+
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield f"data: {json.dumps({'content': chunk.choices[0].delta.content})}\n\n"
+
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'
+        }
+    )
 
 
 if __name__ == '__main__':

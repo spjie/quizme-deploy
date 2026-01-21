@@ -93,3 +93,64 @@ export async function generateContent(prompt: string) {
 
   return response.json()
 }
+
+export async function generateContentStream(
+  prompt: string,
+  onChunk: (content: string) => void,
+  onComplete: (fullContent: string) => void,
+  onError: (error: Error) => void
+) {
+  try {
+    const response = await authFetch(`/chat/stream?prompt=${encodeURIComponent(prompt)}`)
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to generate content')
+    }
+
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder()
+    let fullContent = ''
+
+    if (!reader) {
+      throw new Error('No response body')
+    }
+
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (done) break
+
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n')
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6)
+
+          if (data === '[DONE]') {
+            onComplete(fullContent)
+            return
+          }
+
+          try {
+            const parsed = JSON.parse(data)
+            if (parsed.error) {
+              throw new Error(parsed.error)
+            }
+            if (parsed.content) {
+              fullContent += parsed.content
+              onChunk(parsed.content)
+            }
+          } catch (e) {
+            // Skip invalid JSON lines
+          }
+        }
+      }
+    }
+
+    onComplete(fullContent)
+  } catch (error) {
+    onError(error as Error)
+  }
+}

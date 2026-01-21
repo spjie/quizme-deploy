@@ -9,6 +9,7 @@
     { "src": "/open/(.*)", "dest": "/api/index.py" },
     { "src": "/list-jsons", "dest": "/api/index.py" },
     { "src": "/delete/(.*)", "dest": "/api/index.py" },
+    { "src": "/chat/stream", "dest": "/api/index.py" },
     { "src": "/chat", "dest": "/api/index.py" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
