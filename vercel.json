@@ -1,42 +1,15 @@
 {
   "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    }
+    { "src": "package.json", "use": "@vercel/next" },
+    { "src": "api/index.py", "use": "@vercel/python" }
   ],
   "routes": [
-    {
-      "src": "/auth/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/save",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/open/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/list-jsons",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/delete/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/chat",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/auth/(.*)", "dest": "/api/index.py" },
+    { "src": "/save", "dest": "/api/index.py" },
+    { "src": "/open/(.*)", "dest": "/api/index.py" },
+    { "src": "/list-jsons", "dest": "/api/index.py" },
+    { "src": "/delete/(.*)", "dest": "/api/index.py" },
+    { "src": "/chat", "dest": "/api/index.py" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
