@@ -4,6 +4,16 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AuthGuard from '@/components/AuthGuard'
 import { generateContentStream, saveStudySet } from '@/lib/api'
+import {
+  GenerationOptions,
+  DEFAULT_GENERATION_OPTIONS,
+  BLOOM_LEVELS,
+  buildPromptWithOptions,
+  BloomLevel,
+  LearningMode,
+  ReasoningDepth,
+  DifficultyLevel
+} from '@/lib/generation-options'
 
 const SUBJECTS = [
   'Math',
@@ -39,14 +49,25 @@ export default function SelectPage() {
   const [error, setError] = useState('')
   const [parsedQuestions, setParsedQuestions] = useState<Array<{question: string, answer: string}>>([])
   const previewRef = useRef<HTMLDivElement>(null)
+  const [options, setOptions] = useState<GenerationOptions>(DEFAULT_GENERATION_OPTIONS)
+  const [isGenerationComplete, setIsGenerationComplete] = useState(false)
+  const [generatedTitle, setGeneratedTitle] = useState('')
 
-  // Auto-scroll to bottom when new questions are added
+  // Auto-scroll to show the latest loaded card (not placeholder)
   useEffect(() => {
     if (previewRef.current && parsedQuestions.length > 0) {
-      previewRef.current.scrollTo({
-        top: previewRef.current.scrollHeight,
-        behavior: 'smooth'
-      })
+      // Small delay to ensure the new card has rendered
+      setTimeout(() => {
+        if (previewRef.current) {
+          // Scroll to show the last loaded card, not the placeholders
+          const cardWidth = 320 + 12 // Card width (w-80 = 320px) + gap (gap-3 = 12px)
+          const scrollPosition = Math.max(0, (parsedQuestions.length - 1) * cardWidth)
+          previewRef.current.scrollTo({
+            left: scrollPosition,
+            behavior: 'smooth'
+          })
+        }
+      }, 100)
     }
   }, [parsedQuestions.length])
 
@@ -55,9 +76,10 @@ export default function SelectPage() {
     setError('')
     setLoading(true)
     setParsedQuestions([])
+    setIsGenerationComplete(false)
 
     try {
-      const prompt = type === 'flashcards'
+      const basePrompt = type === 'flashcards'
         ? `Generate ${quantity} flashcards about ${topic} for ${gradeLevel} level ${subject}. For EACH flashcard, output a separate JSON object on its own line in this format: {"question": "Question text", "answer": "Answer text"}
 
 After all flashcards, output a final line with: {"title": "Topic Title", "description": "Brief description"}
@@ -67,7 +89,9 @@ Make questions educational and appropriate for the grade level.`
 
 After all questions, output a final line with: {"title": "Quiz Title", "description": "Brief description"}
 
-Make questions educational and appropriate for the grade level.`
+Make questions educational and appropriate for the grade level. For multiple choice, create PLAUSIBLE DISTRACTORS that represent common misconceptions or errors.`
+
+      const prompt = buildPromptWithOptions(basePrompt, options)
 
       let streamingText = ''
       let title = ''
@@ -138,12 +162,10 @@ Make questions educational and appropriate for the grade level.`
             questions,
           })
 
-          // Redirect to preview
-          if (type === 'flashcards') {
-            router.push(`/flashcards/preview?title=${encodeURIComponent(title)}`)
-          } else {
-            router.push(`/quiz/play?title=${encodeURIComponent(title)}`)
-          }
+          // Mark generation as complete but don't redirect
+          setGeneratedTitle(title)
+          setIsGenerationComplete(true)
+          setLoading(false)
         },
         (err) => {
           setError(err.message)
@@ -156,9 +178,19 @@ Make questions educational and appropriate for the grade level.`
     }
   }
 
+  const handleContinue = () => {
+    if (generatedTitle && isGenerationComplete) {
+      if (type === 'flashcards') {
+        router.push(`/flashcards/preview?title=${encodeURIComponent(generatedTitle)}`)
+      } else {
+        router.push(`/quiz/play?title=${encodeURIComponent(generatedTitle)}`)
+      }
+    }
+  }
+
   return (
     <AuthGuard>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-primary mb-2">
           Create {type === 'flashcards' ? 'Flashcards' : 'Quiz'}
         </h1>
@@ -166,154 +198,263 @@ Make questions educational and appropriate for the grade level.`
           Select a subject and topic to generate {type === 'flashcards' ? 'flashcards' : 'quiz questions'}
         </p>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6">
+          {/* Left Side - Input Form */}
           <form onSubmit={handleSubmit} className="card space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl">
-              {error}
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="subject" className="label">Subject</label>
-            <select
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="input"
-              required
-            >
-              <option value="">Select a subject</option>
-              {SUBJECTS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="topic" className="label">Topic</label>
-            <input
-              type="text"
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="input"
-              placeholder="e.g., Photosynthesis, World War II, Algebra"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="gradeLevel" className="label">Grade Level</label>
-            <select
-              id="gradeLevel"
-              value={gradeLevel}
-              onChange={(e) => setGradeLevel(e.target.value)}
-              className="input"
-              required
-            >
-              <option value="">Select grade level</option>
-              {GRADE_LEVELS.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="quantity" className="label">
-              Number of {type === 'flashcards' ? 'Cards' : 'Questions'}
-            </label>
-            <input
-              type="number"
-              id="quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 10)}
-              className="input"
-              min={5}
-              max={30}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full disabled:opacity-50"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Generating...
-              </span>
-            ) : (
-              `Generate ${type === 'flashcards' ? 'Flashcards' : 'Quiz'}`
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
 
-        {/* Live preview of generated flashcards */}
-        <div className="card">
-          <h2 className="text-xl font-bold text-primary mb-4">
-            {loading ? 'Generating...' : 'Preview'}
-          </h2>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column - Basic Settings */}
+              <div className="space-y-6">
+                <div>
+                  <label htmlFor="subject" className="label">Subject</label>
+                  <select
+                    id="subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="input"
+                    required
+                  >
+                    <option value="">Select a subject</option>
+                    {SUBJECTS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
 
-          {parsedQuestions.length === 0 && !loading && (
-            <p className="text-gray-400 text-center py-8">
-              Generated flashcards will appear here
-            </p>
-          )}
+                <div>
+                  <label htmlFor="topic" className="label">Topic</label>
+                  <input
+                    type="text"
+                    id="topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="input"
+                    placeholder="e.g., Photosynthesis, World War II, Algebra"
+                    required
+                  />
+                </div>
 
-          {loading && (
-            <div ref={previewRef} className="space-y-3 max-h-[500px] overflow-y-auto">
-              {Array.from({ length: quantity }).map((_, idx) => {
-                const isLoaded = idx < parsedQuestions.length
-                const q = parsedQuestions[idx]
+                <div>
+                  <label htmlFor="gradeLevel" className="label">Grade Level</label>
+                  <select
+                    id="gradeLevel"
+                    value={gradeLevel}
+                    onChange={(e) => setGradeLevel(e.target.value)}
+                    className="input"
+                    required
+                  >
+                    <option value="">Select grade level</option>
+                    {GRADE_LEVELS.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
 
-                return isLoaded ? (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 animate-fade-in">
-                    <div className="text-sm font-semibold text-primary mb-1">
+                <div>
+                  <label htmlFor="quantity" className="label">
+                    Number of {type === 'flashcards' ? 'Cards' : 'Questions'}
+                  </label>
+                  <input
+                    type="number"
+                    id="quantity"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 10)}
+                    className="input"
+                    min={5}
+                    max={30}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Right Column - Generation Options */}
+              <div className="border-l border-gray-200 pl-6 space-y-4">
+                <h3 className="text-sm font-semibold text-primary">Learning Objectives</h3>
+
+                {/* Difficulty Level Slider */}
+                <div>
+                  <label htmlFor="difficultyLevel" className="label">
+                    Difficulty Level: {options.difficultyLevel}/5
+                  </label>
+                  <input
+                    type="range"
+                    id="difficultyLevel"
+                    min="1"
+                    max="5"
+                    step="1"
+                    value={options.difficultyLevel}
+                    onChange={(e) => setOptions({ ...options, difficultyLevel: parseInt(e.target.value) as DifficultyLevel })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Very Easy</span>
+                    <span>Easy</span>
+                    <span>Moderate</span>
+                    <span>Hard</span>
+                    <span>Very Hard</span>
+                  </div>
+                </div>
+
+                {/* Bloom's Taxonomy Level */}
+                <div>
+                  <label htmlFor="bloomLevel" className="label">Bloom&apos;s Taxonomy Level</label>
+                  <select
+                    id="bloomLevel"
+                    value={options.bloomLevel}
+                    onChange={(e) => setOptions({ ...options, bloomLevel: e.target.value as BloomLevel })}
+                    className="input text-sm"
+                  >
+                    {BLOOM_LEVELS.map((level) => (
+                      <option key={level.value} value={level.value}>
+                        {level.label} - {level.description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Learning Mode */}
+                <div>
+                  <label htmlFor="learningMode" className="label">Learning Mode</label>
+                  <select
+                    id="learningMode"
+                    value={options.learningMode}
+                    onChange={(e) => setOptions({ ...options, learningMode: e.target.value as LearningMode })}
+                    className="input text-sm"
+                  >
+                    <option value="fact-recall">Fact Recall - Test memorization of specific information</option>
+                    <option value="conceptual">Conceptual Understanding - Test deeper comprehension</option>
+                  </select>
+                </div>
+
+                {/* Reasoning Depth */}
+                <div>
+                  <label htmlFor="reasoningDepth" className="label">Reasoning Depth</label>
+                  <select
+                    id="reasoningDepth"
+                    value={options.reasoningDepth}
+                    onChange={(e) => setOptions({ ...options, reasoningDepth: e.target.value as ReasoningDepth })}
+                    className="input text-sm"
+                  >
+                    <option value="single-step">Single-step - Direct, focused questions</option>
+                    <option value="multi-step">Multi-step - Complex, multi-part reasoning</option>
+                  </select>
+                </div>
+
+                {/* Exam Prep Mode */}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="examPrepMode"
+                    checked={options.examPrepMode}
+                    onChange={(e) => setOptions({ ...options, examPrepMode: e.target.checked })}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  />
+                  <label htmlFor="examPrepMode" className="text-sm text-primary font-medium">
+                    Exam Prep Mode (more rigorous, exam-style questions)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary px-6 py-2 disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </span>
+                ) : (
+                  `Generate ${type === 'flashcards' ? 'Flashcards' : 'Quiz'}`
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Right Side - Preview */}
+          <div className="card flex flex-col">
+            <h2 className="text-xl font-bold text-primary mb-4">
+              {loading ? 'Generating...' : 'Preview'}
+            </h2>
+
+            {parsedQuestions.length === 0 && !loading && (
+              <div className="flex-grow flex items-center justify-center">
+                <p className="text-gray-400 text-center">
+                  Generated flashcards will appear here
+                </p>
+              </div>
+            )}
+
+            {loading && (
+              <div ref={previewRef} className="flex gap-3 max-w-full overflow-x-auto pb-4 flex-grow">
+                {Array.from({ length: quantity }).map((_, idx) => {
+                  const isLoaded = idx < parsedQuestions.length
+                  const q = parsedQuestions[idx]
+
+                  return isLoaded ? (
+                    <div key={idx} className="flex-shrink-0 w-80 h-full p-6 bg-gray-50 rounded-lg border border-gray-200 animate-fade-in flex flex-col">
+                      <div className="text-sm font-semibold text-primary mb-3">
+                        Question {idx + 1}
+                      </div>
+                      <div className="font-medium mb-4 flex-grow overflow-y-auto">{q.question}</div>
+                      <div className="text-sm text-gray-600 border-t border-gray-200 pt-3">
+                        <span className="font-medium">Answer:</span> {q.answer}
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={idx} className="flex-shrink-0 w-80 h-full p-6 bg-gray-50 rounded-lg border border-gray-200 animate-pulse flex flex-col">
+                      <div className="text-sm font-semibold text-gray-300 mb-3">
+                        Question {idx + 1}
+                      </div>
+                      <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] rounded mb-2 animate-shimmer"></div>
+                      <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] rounded w-3/4 animate-shimmer"></div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {!loading && parsedQuestions.length > 0 && (
+              <div ref={previewRef} className="flex gap-3 max-w-full overflow-x-auto pb-4 flex-grow">
+                {parsedQuestions.map((q, idx) => (
+                  <div key={idx} className="flex-shrink-0 w-80 h-full p-6 bg-gray-50 rounded-lg border border-gray-200 flex flex-col">
+                    <div className="text-sm font-semibold text-primary mb-3">
                       Question {idx + 1}
                     </div>
-                    <div className="font-medium mb-2">{q.question}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="font-medium mb-4 flex-grow overflow-y-auto">{q.question}</div>
+                    <div className="text-sm text-gray-600 border-t border-gray-200 pt-3">
                       <span className="font-medium">Answer:</span> {q.answer}
                     </div>
                   </div>
-                ) : (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
-                    <div className="text-sm font-semibold text-gray-300 mb-1">
-                      Question {idx + 1}
-                    </div>
-                    <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] rounded mb-2 animate-shimmer"></div>
-                    <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] rounded w-3/4 animate-shimmer"></div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          {!loading && parsedQuestions.length > 0 && (
-            <div ref={previewRef} className="space-y-3 max-h-[500px] overflow-y-auto">
-              {parsedQuestions.map((q, idx) => (
-                <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-sm font-semibold text-primary mb-1">
-                    Question {idx + 1}
-                  </div>
-                  <div className="font-medium mb-2">{q.question}</div>
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Answer:</span> {q.answer}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+            {loading && parsedQuestions.length === 0 && (
+              <div className="flex-grow flex items-center justify-center">
+                <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
 
-          {loading && parsedQuestions.length === 0 && (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+            {/* Continue Button */}
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={handleContinue}
+                disabled={!isGenerationComplete}
+                className="btn-primary px-6 py-2 disabled:opacity-50"
+              >
+                {isGenerationComplete ? 'Looks Good →' : loading ? 'Generating...' : 'Looks Good →'}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
         </div>
       </div>
     </AuthGuard>
