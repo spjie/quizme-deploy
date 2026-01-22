@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthGuard from '@/components/AuthGuard'
-import { openStudySet, deleteStudySet, saveStudySet } from '@/lib/api'
+import { openStudySet, deleteStudySet, saveStudySet, generateContent } from '@/lib/api'
 
 type FlashcardQuestion = {
   question: string
@@ -36,6 +36,10 @@ function EditContent() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [refiningIndex, setRefiningIndex] = useState<number | null>(null)
+  const [typewriterContent, setTypewriterContent] = useState<{ question: string; answer: string } | null>(null)
+  const [typewriterIndex, setTypewriterIndex] = useState<number | null>(null)
+  const [isTypingQuestion, setIsTypingQuestion] = useState(false)
 
   useEffect(() => {
     if (originalTitle) {
@@ -132,6 +136,94 @@ function EditContent() {
     setQuestions(questions.filter((_, i) => i !== index))
   }
 
+  const handleRefine = async (index: number, action: 'harder' | 'simplify' | 'rephrase') => {
+    if (!studySet || studySet.type !== 'flashcards') return
+
+    setRefiningIndex(index)
+    setTypewriterContent(null)
+    setTypewriterIndex(null)
+
+    const question = questions[index] as FlashcardQuestion
+
+    let prompt = ''
+    if (action === 'harder') {
+      prompt = `Make this flashcard question harder while keeping the same topic. Original question: "${question.question}" Original answer: "${question.answer}". Return ONLY a JSON object with this exact format: {"question": "new question", "answer": "new answer"}`
+    } else if (action === 'simplify') {
+      prompt = `Simplify this flashcard question to make it easier while keeping the same topic. Original question: "${question.question}" Original answer: "${question.answer}". Return ONLY a JSON object with this exact format: {"question": "new question", "answer": "new answer"}`
+    } else if (action === 'rephrase') {
+      prompt = `Rephrase this flashcard question using different words but maintaining the same difficulty and topic. Original question: "${question.question}" Original answer: "${question.answer}". Return ONLY a JSON object with this exact format: {"question": "new question", "answer": "new answer"}`
+    }
+
+    try {
+      const response = await generateContent(prompt)
+      let newQuestion: FlashcardQuestion
+
+      // Try to parse the response as JSON
+      try {
+        newQuestion = JSON.parse(response.response)
+      } catch {
+        // If not valid JSON, try to extract JSON from the response
+        const jsonMatch = response.response.match(/\{[\s\S]*"question"[\s\S]*"answer"[\s\S]*\}/)
+        if (jsonMatch) {
+          newQuestion = JSON.parse(jsonMatch[0])
+        } else {
+          throw new Error('Invalid response format')
+        }
+      }
+
+      // Start typewriter effect
+      setRefiningIndex(null)
+      setTypewriterIndex(index)
+      setTypewriterContent(newQuestion)
+      setIsTypingQuestion(true)
+
+      // Animate typewriter effect
+      let questionChars = 0
+      let answerChars = 0
+      const questionLength = newQuestion.question.length
+      const answerLength = newQuestion.answer.length
+      const speed = 20 // ms per character
+
+      const interval = setInterval(() => {
+        if (questionChars < questionLength) {
+          questionChars++
+          const partialQuestion = newQuestion.question.slice(0, questionChars)
+          const newQuestions = [...questions] as FlashcardQuestion[]
+          const currentQuestion = questions[index] as FlashcardQuestion
+          newQuestions[index] = {
+            question: partialQuestion,
+            answer: currentQuestion.answer
+          }
+          setQuestions(newQuestions)
+        } else if (answerChars < answerLength) {
+          if (answerChars === 0) {
+            setIsTypingQuestion(false)
+          }
+          answerChars++
+          const partialAnswer = newQuestion.answer.slice(0, answerChars)
+          const newQuestions = [...questions] as FlashcardQuestion[]
+          newQuestions[index] = {
+            question: newQuestion.question,
+            answer: partialAnswer
+          }
+          setQuestions(newQuestions)
+        } else {
+          clearInterval(interval)
+          setTypewriterIndex(null)
+          setTypewriterContent(null)
+          setIsTypingQuestion(false)
+        }
+      }, speed)
+    } catch (err) {
+      console.error('Failed to refine question:', err)
+      setError(err instanceof Error ? err.message : 'Failed to refine question')
+      setRefiningIndex(null)
+      setTypewriterIndex(null)
+      setTypewriterContent(null)
+      setIsTypingQuestion(false)
+    }
+  }
+
   if (loading) {
     return (
       <AuthGuard>
@@ -212,21 +304,47 @@ function EditContent() {
 
             {questions.map((q, index) => (
               <div key={index} className="card relative">
-                <button
-                  onClick={() => removeQuestion(index)}
-                  disabled={questions.length <= 1}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-red-500 disabled:opacity-30"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                {refiningIndex === index || (typewriterIndex === index && isTypingQuestion) ? (
+                  // Loading shimmer placeholder while waiting or typing question
+                  <div className="space-y-4 pr-8">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Card {index + 1}
+                    </p>
+                    <div>
+                      <label className="label">Question</label>
+                      {refiningIndex === index ? (
+                        <div className="h-11 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer rounded-xl"></div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={(q as FlashcardQuestion).question}
+                          className="input"
+                          readOnly
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <label className="label">Answer</label>
+                      <div className="h-11 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-shimmer rounded-xl"></div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => removeQuestion(index)}
+                      disabled={questions.length <= 1}
+                      className="absolute top-4 right-4 text-gray-400 hover:text-red-500 disabled:opacity-30"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
 
-                <p className="text-sm text-gray-500 mb-4">
-                  {studySet.type === 'flashcards' ? `Card ${index + 1}` : `Question ${index + 1}`}
-                </p>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {studySet.type === 'flashcards' ? `Card ${index + 1}` : `Question ${index + 1}`}
+                    </p>
 
-                {studySet.type === 'flashcards' ? (
+                    {studySet.type === 'flashcards' ? (
                   <div className="space-y-4 pr-8">
                     <div>
                       <label className="label">Question</label>
@@ -245,6 +363,32 @@ function EditContent() {
                         onChange={(e) => updateFlashcard(index, 'answer', e.target.value)}
                         className="input"
                       />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => handleRefine(index, 'harder')}
+                        disabled={refiningIndex !== null || typewriterIndex !== null}
+                        className="text-xs px-3 py-1.5 border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+                        title="Make harder"
+                      >
+                        Make Harder
+                      </button>
+                      <button
+                        onClick={() => handleRefine(index, 'simplify')}
+                        disabled={refiningIndex !== null || typewriterIndex !== null}
+                        className="text-xs px-3 py-1.5 border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+                        title="Simplify"
+                      >
+                        Simplify
+                      </button>
+                      <button
+                        onClick={() => handleRefine(index, 'rephrase')}
+                        disabled={refiningIndex !== null || typewriterIndex !== null}
+                        className="text-xs px-3 py-1.5 border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+                        title="Rephrase"
+                      >
+                        Rephrase
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -284,6 +428,8 @@ function EditContent() {
                     </div>
                   </div>
                 )}
+                </>
+              )}
               </div>
             ))}
           </div>

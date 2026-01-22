@@ -5,12 +5,12 @@
 @import url("https://use.typekit.net/wzd7sjm.css");
 
 :root {
-  --primary: #5F423D;
-  --primary-dark: #4a3430;
-  --secondary: #FFE5F1;
-  --secondary-dark: #ffd6e8;
+  --primary: #1A1923;
+  --primary-dark: #3e3d56;
+  --secondary: #bec67a;
+  --secondary-dark: #a8b065;
   --accent: #F5F3F3;
-  --background: #FFE5F1;
+  --background: #bec67a;
 }
 
 body {
@@ -33,7 +33,7 @@ body {
 
 /* Card styles */
 .card {
-  @apply bg-white rounded-2xl shadow-md p-6;
+  @apply bg-accent rounded-2xl p-6;
 }
 
 /* Flashcard flip animation */
