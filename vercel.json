@@ -6,6 +6,7 @@
   "routes": [
     { "src": "/auth/(.*)", "dest": "/api/index.py" },
     { "src": "/save", "dest": "/api/index.py" },
+    { "src": "/update/(.*)", "dest": "/api/index.py" },
     { "src": "/open/(.*)", "dest": "/api/index.py" },
     { "src": "/list-jsons", "dest": "/api/index.py" },
     { "src": "/delete/(.*)", "dest": "/api/index.py" },

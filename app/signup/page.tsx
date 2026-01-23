@@ -17,7 +17,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/')
+      router.push('/library')
     }
   }, [user, authLoading, router])
 

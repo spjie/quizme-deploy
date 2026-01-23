@@ -1,3 +1,10 @@
+import os
+
+# Load .env.local only in local development (not in Vercel)
+if not os.getenv('VERCEL'):
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env.local'))
+
 from openai import OpenAI
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
@@ -5,7 +12,6 @@ from supabase import create_client, Client
 from functools import wraps
 from urllib.parse import unquote
 import json
-import os
 
 app = Flask(__name__)
 
@@ -201,6 +207,53 @@ def save_json():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/update/<int:study_set_id>', methods=['PUT'])
+@require_auth
+def update_json(study_set_id):
+    """Update an existing study set"""
+    data = request.get_json()
+    user_id = str(g.user.id)
+
+    if not data or 'title' not in data:
+        return jsonify({"error": "Invalid JSON data or missing title"}), 400
+
+    try:
+        # Verify ownership
+        result = supabase.table('study_sets').select('id').eq('id', study_set_id).eq('user_id', user_id).execute()
+        if not result.data:
+            return jsonify({"error": "Study set not found or access denied"}), 404
+
+        # Update study set metadata
+        study_set_data = {
+            "title": data['title'],
+            "description": data.get('description', ''),
+            "type": 'Flashcards',
+            "quantity": data.get('quantity', len(data.get('questions', [])))
+        }
+        supabase.table('study_sets').update(study_set_data).eq('id', study_set_id).execute()
+
+        # Delete old questions and insert new ones
+        supabase.table('flashcard_questions').delete().eq('study_set_id', study_set_id).execute()
+
+        questions = data.get('questions', [])
+        for idx, q in enumerate(questions):
+            supabase.table('flashcard_questions').insert({
+                "study_set_id": study_set_id,
+                "question": q['question'],
+                "answer": q['answer'],
+                "position": idx
+            }).execute()
+
+        return jsonify({
+            "message": "Study set updated successfully",
+            "id": study_set_id
+        }), 200
+
+    except Exception as e:
+        print(f"Update error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/open/<identifier>')
 @require_auth
 def open_json(identifier):
@@ -247,6 +300,7 @@ def list_jsons():
         files = []
         for item in result.data:
             files.append({
+                "id": item['id'],
                 "title": item['title'],
                 "description": item.get('description', ''),
                 "type": 'flashcards'
@@ -261,16 +315,22 @@ def list_jsons():
 @app.route('/delete/<identifier>')
 @require_auth
 def delete_json(identifier):
-    """Delete a study set by title"""
+    """Delete a study set by ID or title (for backward compatibility)"""
     user_id = str(g.user.id)
-    title = unquote(identifier).replace('.json', '')
 
     try:
-        # Delete by title (cascades to questions due to foreign key)
-        result = supabase.table('study_sets').delete().eq('user_id', user_id).eq('title', title).execute()
+        # Try to parse as ID first (integer)
+        try:
+            study_set_id = int(identifier)
+            # Delete by ID (cascades to questions due to foreign key)
+            result = supabase.table('study_sets').delete().eq('user_id', user_id).eq('id', study_set_id).execute()
+        except ValueError:
+            # Fall back to title-based deletion for backward compatibility
+            title = unquote(identifier).replace('.json', '')
+            result = supabase.table('study_sets').delete().eq('user_id', user_id).eq('title', title).execute()
 
         if result.data:
-            return jsonify({"message": f"Study set '{title}' deleted successfully"}), 200
+            return jsonify({"message": "Study set deleted successfully"}), 200
         else:
             return jsonify({"error": "Study set not found"}), 404
 

@@ -50,6 +50,30 @@ export async function saveStudySet(data: {
   return response.json()
 }
 
+export async function updateStudySet(id: number, data: {
+  title: string
+  description: string
+  type: 'flashcards' | 'quiz'
+  questions: Array<{
+    question: string
+    answer?: string
+    correct_answer?: string
+    incorrect_answers?: string[]
+  }>
+}) {
+  const response = await authFetch(`/update/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to update study set')
+  }
+
+  return response.json()
+}
+
 export async function openStudySet(identifier: string) {
   const response = await authFetch(`/open/${encodeURIComponent(identifier)}`)
 

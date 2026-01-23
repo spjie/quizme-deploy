@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/')
+      router.push('/library')
     }
   }, [user, authLoading, router])
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      router.push('/')
+      router.push('/library')
     }
   }
 

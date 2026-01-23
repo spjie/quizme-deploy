@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthGuard from '@/components/AuthGuard'
-import { openStudySet, deleteStudySet, saveStudySet, generateContent } from '@/lib/api'
+import { openStudySet, updateStudySet, generateContent } from '@/lib/api'
 
 type FlashcardQuestion = {
   question: string
@@ -27,9 +27,11 @@ type StudySet = {
 function EditContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const studySetId = searchParams.get('id')
   const originalTitle = searchParams.get('title')
 
   const [studySet, setStudySet] = useState<StudySet | null>(null)
+  const [studySetDbId, setStudySetDbId] = useState<number | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [questions, setQuestions] = useState<(FlashcardQuestion | QuizQuestion)[]>([])
@@ -42,15 +44,17 @@ function EditContent() {
   const [isTypingQuestion, setIsTypingQuestion] = useState(false)
 
   useEffect(() => {
-    if (originalTitle) {
+    if (studySetId || originalTitle) {
       loadStudySet()
     }
-  }, [originalTitle])
+  }, [studySetId, originalTitle])
 
   const loadStudySet = async () => {
     try {
-      const data = await openStudySet(originalTitle!) as StudySet
+      const identifier = studySetId || originalTitle!
+      const data = await openStudySet(identifier) as StudySet & { id: number }
       setStudySet(data)
+      setStudySetDbId(data.id)
       setTitle(data.title)
       setDescription(data.description)
       setQuestions(data.questions)
@@ -62,22 +66,14 @@ function EditContent() {
   }
 
   const handleSave = async () => {
-    if (!studySet) return
+    if (!studySet || !studySetDbId) return
 
     setSaving(true)
     setError('')
 
     try {
-      // Delete old study set first if title changed
-      if (originalTitle !== title) {
-        await deleteStudySet(originalTitle!)
-      } else {
-        // Delete and re-save to update
-        await deleteStudySet(originalTitle!)
-      }
-
-      // Save with new data
-      await saveStudySet({
+      // Update the study set using the update endpoint
+      await updateStudySet(studySetDbId, {
         title,
         description,
         type: studySet.type,

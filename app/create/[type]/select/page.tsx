@@ -52,6 +52,8 @@ export default function SelectPage() {
   const [options, setOptions] = useState<GenerationOptions>(DEFAULT_GENERATION_OPTIONS)
   const [isGenerationComplete, setIsGenerationComplete] = useState(false)
   const [generatedTitle, setGeneratedTitle] = useState('')
+  const [generatedDescription, setGeneratedDescription] = useState('')
+  const [generatedQuestions, setGeneratedQuestions] = useState<Array<{question: string, answer: string}>>([])
 
   // Auto-scroll to show the latest loaded card (not placeholder)
   useEffect(() => {
@@ -154,16 +156,10 @@ Make questions educational and appropriate for the grade level. For multiple cho
             throw new Error('Failed to parse AI response')
           }
 
-          // Save the study set
-          await saveStudySet({
-            title,
-            description,
-            type,
-            questions,
-          })
-
-          // Mark generation as complete but don't redirect
+          // Store the generated data without saving to database
           setGeneratedTitle(title)
+          setGeneratedDescription(description)
+          setGeneratedQuestions(questions)
           setIsGenerationComplete(true)
           setLoading(false)
         },
@@ -178,12 +174,25 @@ Make questions educational and appropriate for the grade level. For multiple cho
     }
   }
 
-  const handleContinue = () => {
-    if (generatedTitle && isGenerationComplete) {
-      if (type === 'flashcards') {
-        router.push(`/flashcards/preview?title=${encodeURIComponent(generatedTitle)}`)
-      } else {
-        router.push(`/quiz/play?title=${encodeURIComponent(generatedTitle)}`)
+  const handleContinue = async () => {
+    if (generatedTitle && isGenerationComplete && generatedQuestions.length > 0) {
+      try {
+        // Save the study set to database
+        await saveStudySet({
+          title: generatedTitle,
+          description: generatedDescription,
+          type,
+          questions: generatedQuestions,
+        })
+
+        // Navigate to preview
+        if (type === 'flashcards') {
+          router.push(`/flashcards/preview?title=${encodeURIComponent(generatedTitle)}`)
+        } else {
+          router.push(`/quiz/play?title=${encodeURIComponent(generatedTitle)}`)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save study set')
       }
     }
   }

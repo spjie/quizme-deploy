@@ -7,6 +7,7 @@ import StudySetCard from '@/components/StudySetCard'
 import { listStudySets, deleteStudySet } from '@/lib/api'
 
 type StudySet = {
+  id: number
   title: string
   description: string
 }
@@ -31,10 +32,10 @@ export default function LibraryPage() {
     }
   }
 
-  const handleDelete = async (title: string) => {
+  const handleDelete = async (id: number) => {
     try {
-      await deleteStudySet(title)
-      setStudySets(studySets.filter(s => s.title !== title))
+      await deleteStudySet(id.toString())
+      setStudySets(studySets.filter(s => s.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete study set')
     }
@@ -72,10 +73,11 @@ export default function LibraryPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {studySets.map((set) => (
               <StudySetCard
-                key={set.title}
+                key={set.id}
+                id={set.id}
                 title={set.title}
                 description={set.description}
-                onDelete={() => handleDelete(set.title)}
+                onDelete={() => handleDelete(set.id)}
               />
             ))}
           </div>

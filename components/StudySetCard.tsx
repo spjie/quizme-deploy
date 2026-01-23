@@ -4,17 +4,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 type StudySetCardProps = {
+  id: number
   title: string
   description: string
   onDelete: () => void
 }
 
-export default function StudySetCard({ title, description, onDelete }: StudySetCardProps) {
+export default function StudySetCard({ id, title, description, onDelete }: StudySetCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const previewLink = `/flashcards/preview?title=${encodeURIComponent(title)}`
-  const editLink = `/edit?title=${encodeURIComponent(title)}`
+  const editLink = `/edit?id=${id}`
 
   return (
     <>
