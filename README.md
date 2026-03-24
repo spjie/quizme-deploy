@@ -14,7 +14,7 @@ An app that turns your notes into AI-generated flashcards to make studying more 
 - Tailwind CSS
 
 ## Demo
-[studywithquizme.vercel.app](https://studywithme.vercel.app/)
+[studywithquizme.vercel.app](https://studywithquizme.vercel.app/)
 
 ## Setup
 npm install
