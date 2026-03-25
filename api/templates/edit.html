@@ -162,7 +162,7 @@ Edit
     async function deleteOriginalJson() {
         let file = filename + '.json'
         try {
-            const response = await authFetch('/delete/' + file)
+            const response = await authFetch('/api/delete/' + file)
             const data = await response.json();
             console.log('Success: ', data)
         } catch (error) {
@@ -172,7 +172,7 @@ Edit
 
     async function saveJson() {
         try {
-            const response = await authFetch('/save', {
+            const response = await authFetch('/api/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

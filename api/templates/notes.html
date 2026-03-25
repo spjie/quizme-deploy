@@ -161,7 +161,7 @@ Create {{ type }}
     async function createSet(conversation, input) {
         conversation.push({"role": "user", "content": input})
         try {
-            const response = await authFetch('/chat?prompt=' + JSON.stringify(conversation))
+            const response = await authFetch('/api/chat?prompt=' + JSON.stringify(conversation))
             const jsonData = await response.json();
             for (let i = 0; i < jsonData.questions.length; i++) {
                 console.log("question: " + jsonData.questions[i].question);
@@ -175,7 +175,7 @@ Create {{ type }}
 
     async function saveJson(json) {
         try {
-            const response = await authFetch('/save', {
+            const response = await authFetch('/api/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -192,7 +192,7 @@ Create {{ type }}
 
     async function openJson(filename) {
         try {
-            const response = await authFetch('/open/' + filename, {
+            const response = await authFetch('/api/open/' + filename, {
                 method: 'GET'
             })
             const data = await response.json();

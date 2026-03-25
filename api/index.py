@@ -88,7 +88,7 @@ def health_check():
 
 # ============ Data Routes ============
 
-@app.route('/save', methods=['POST'])
+@app.route('/api/save', methods=['POST'])
 @require_auth
 def save_json():
     """Save a study set to Supabase database"""
@@ -133,7 +133,7 @@ def save_json():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/update/<int:study_set_id>', methods=['PUT'])
+@app.route('/api/update/<int:study_set_id>', methods=['PUT'])
 @require_auth
 def update_json(study_set_id):
     """Update an existing study set"""
@@ -180,7 +180,7 @@ def update_json(study_set_id):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/open/<identifier>')
+@app.route('/api/open/<identifier>')
 @require_auth
 def open_json(identifier):
     """Open a study set by ID or title"""
@@ -214,7 +214,7 @@ def open_json(identifier):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/list-jsons')
+@app.route('/api/list-jsons')
 @require_auth
 def list_jsons():
     """List all study sets for the current user"""
@@ -238,7 +238,7 @@ def list_jsons():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/delete/<identifier>')
+@app.route('/api/delete/<identifier>')
 @require_auth
 def delete_json(identifier):
     """Delete a study set by ID or title (for backward compatibility)"""
@@ -264,7 +264,7 @@ def delete_json(identifier):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/chat')
+@app.route('/api/chat')
 @require_auth
 def select_chat_completion():
     """Generate AI content using OpenAI"""
@@ -298,7 +298,7 @@ def select_chat_completion():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/chat/stream')
+@app.route('/api/chat/stream')
 @require_auth
 def stream_chat_completion():
     """Stream AI content generation using OpenAI"""
@@ -346,4 +346,4 @@ def stream_chat_completion():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)
+    app.run(debug=True, port=5001)

@@ -38,7 +38,7 @@ Test
         textarea.value += "USER: " + prompt + "\n\n";
 
         conversation.push({"role": "user", "content": prompt})
-        fetch('/chat?prompt=' + JSON.stringify(conversation))
+        fetch('/api/chat?prompt=' + JSON.stringify(conversation))
             .then(response => {
                 return response.text();
             })
