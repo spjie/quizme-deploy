@@ -9,10 +9,10 @@ An app that turns your notes into AI-generated flashcards to make studying more 
 - Simple interface for reviewing cards
 
 ## Tech Stack
-Frontend: Next.js + Tailwind CSS
-Backend: Flask API
-Database: Supabase (Postgres)
-AI: OpenAI API
+- Frontend: Next.js + Tailwind CSS
+- Backend: Flask API
+- Database: Supabase (Postgres)
+- AI: OpenAI API
 
 ## Demo
 [studywithquizme.vercel.app](https://studywithquizme.vercel.app/)
