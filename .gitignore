@@ -25,3 +25,6 @@ next-env.d.ts
 uv.lock
 pyproject.toml
 .python-version
+
+
+.DS_Store
