@@ -27,7 +27,7 @@ const config: Config = {
         display: ['Kirang Haerang', 'cursive'],  
       },
       backgroundImage: {
-        'notebook': "linear-gradient(transparent 80px, transparent 80px), repeating-linear-gradient(transparent, transparent 31px, #E8DDD3 31px, #E8DDD3 32px)",
+        'notebook': "repeating-linear-gradient(transparent, transparent 36px, #eae3db 36px, #eae3db 37px)",
       },
     },
   },

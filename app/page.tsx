@@ -39,7 +39,7 @@ export default function HomePage() {
   const active = tabs[activeTab]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background bg-notebook">
 
       {/* ── HERO ── */}
       <section className="relative flex flex-col items-center px-10 py-40 pb-48">
