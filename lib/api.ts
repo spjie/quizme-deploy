@@ -37,7 +37,7 @@ export async function saveStudySet(data: {
     incorrect_answers?: string[]
   }>
 }) {
-  const response = await authFetch('/save', {
+  const response = await authFetch('/api/save', {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -61,7 +61,7 @@ export async function updateStudySet(id: number, data: {
     incorrect_answers?: string[]
   }>
 }) {
-  const response = await authFetch(`/update/${id}`, {
+  const response = await authFetch(`/api/update/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })
@@ -75,7 +75,7 @@ export async function updateStudySet(id: number, data: {
 }
 
 export async function openStudySet(identifier: string) {
-  const response = await authFetch(`/open/${encodeURIComponent(identifier)}`)
+  const response = await authFetch(`/api/open/${encodeURIComponent(identifier)}`)
 
   if (!response.ok) {
     const error = await response.json()
@@ -86,7 +86,7 @@ export async function openStudySet(identifier: string) {
 }
 
 export async function listStudySets() {
-  const response = await authFetch('/list-jsons')
+  const response = await authFetch('/api/list-jsons')
 
   if (!response.ok) {
     const error = await response.json()
@@ -97,7 +97,7 @@ export async function listStudySets() {
 }
 
 export async function deleteStudySet(identifier: string) {
-  const response = await authFetch(`/delete/${encodeURIComponent(identifier)}`)
+  const response = await authFetch(`/api/delete/${encodeURIComponent(identifier)}`)
 
   if (!response.ok) {
     const error = await response.json()
@@ -108,7 +108,7 @@ export async function deleteStudySet(identifier: string) {
 }
 
 export async function generateContent(prompt: string) {
-  const response = await authFetch(`/chat?prompt=${encodeURIComponent(prompt)}`)
+  const response = await authFetch(`/api/chat?prompt=${encodeURIComponent(prompt)}`)
 
   if (!response.ok) {
     const error = await response.json()
@@ -125,7 +125,7 @@ export async function generateContentStream(
   onError: (error: Error) => void
 ) {
   try {
-    const response = await authFetch(`/chat/stream?prompt=${encodeURIComponent(prompt)}`)
+    const response = await authFetch(`/api/chat/stream?prompt=${encodeURIComponent(prompt)}`)
 
     if (!response.ok) {
       const error = await response.json()

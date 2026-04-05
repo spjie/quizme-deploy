@@ -2,38 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://use.typekit.net/wzd7sjm.css");
-
 :root {
-  --primary: #1A1923;
-  --primary-dark: #3e3d56;
-  --secondary: #bec67a;
-  --secondary-dark: #a8b065;
+  --primary: #47240a;
+  --primary-dark: #2A1D17;
+  --secondary: #F5DF4D;
+  --secondary-dark: #E5CF3D;
   --accent: #F5F3F3;
-  --background: #bec67a;
+  --background: #FEFDFB;
+  --border: #3D2A21;
+  --gold: #D4AF37;
+  --font-display: 'Kirang Haerang', cursive;
 }
 
 body {
-  font-family: 'elza-text', system-ui, sans-serif;
   color: var(--primary);
 }
 
 /* Custom button styles */
 .btn-primary {
-  @apply bg-primary text-white px-6 py-2 rounded-full font-medium transition-colors hover:bg-primary-dark;
+  @apply text-white bg-primary rounded-full px-6 py-3 text-[12px] tracking-wider hover:-translate-y-0.5 hover:shadow-lg transition-all;
 }
 
 .btn-secondary {
-  @apply bg-secondary text-primary px-6 py-2 rounded-full font-medium transition-colors hover:bg-secondary-dark border border-primary;
+  @apply bg-white text-primary px-6 py-2 rounded-xl font-medium transition-colors hover:bg-gray-50 border-2 border-primary;
 }
 
 .btn-outline {
-  @apply border-2 border-primary text-primary px-6 py-2 rounded-full font-medium transition-colors hover:bg-primary hover:text-white;
+  @apply border-2 border-primary text-primary px-6 py-2 rounded-xl font-medium transition-colors hover:bg-primary hover:text-white;
 }
 
 /* Card styles */
 .card {
-  @apply bg-accent rounded-2xl p-6;
+  @apply bg-white rounded-2xl p-6 border border-primary shadow-sm;
 }
 
 /* Flashcard flip animation */

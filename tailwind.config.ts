@@ -10,18 +10,24 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1A1923',
-          dark: '#3e3d56',
+          DEFAULT: '#47240a',
+          dark: '#2A1D17',
         },
         secondary: {
-          DEFAULT: '#bec67a',
-          dark: '#a8b065',
+          DEFAULT: '#F5DF4D',
+          dark: '#E5CF3D',
         },
         accent: '#F5F3F3',
-        background: '#bec67a',
+        background: '#FFFAF6',
+        border: '#3D2A21',
+        gold: '#D4AF37',
       },
       fontFamily: {
-        sans: ['elza-text', 'system-ui', 'sans-serif'],
+        sans: ['Roboto', 'system-ui', 'sans-serif'],
+        display: ['Kirang Haerang', 'cursive'],  
+      },
+      backgroundImage: {
+        'notebook': "linear-gradient(transparent 80px, transparent 80px), repeating-linear-gradient(transparent, transparent 31px, #E8DDD3 31px, #E8DDD3 32px)",
       },
     },
   },

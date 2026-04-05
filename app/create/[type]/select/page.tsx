@@ -200,11 +200,11 @@ Make questions educational and appropriate for the grade level. For multiple cho
   return (
     <AuthGuard>
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">
-          Create {type === 'flashcards' ? 'Flashcards' : 'Quiz'}
-        </h1>
-        <p className="text-gray-600 mb-8">
-          Select a subject and topic to generate {type === 'flashcards' ? 'flashcards' : 'quiz questions'}
+        <p className="text-primary font-bold text-lg">
+          Create
+        </p>
+        <p className="text-primary text-[14px] mb-4">
+          SELECT A SUBJECT AND TOPIC TO GENERATE FLASHCARDS
         </p>
 
         <div className="grid grid-cols-2 gap-6">
