@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
+import Image from 'next/image'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -59,9 +60,17 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="relative w-full max-w-md">
+        <Image
+          src="/star.png"
+          alt="star"
+          width={64}
+          height={64}
+          className="absolute -top-8 left-[15%] -translate-x-1/2 rotate-[-7deg]"
+        />
+
       <div className="card max-w-md w-full">
-        <h1 className="text-3xl font-bold text-primary text-center mb-2">Create Account</h1>
-        <p className="text-gray-600 text-center mb-8">Join Quizme today</p>
+        <h1 className="text-3xl font-display text-primary text-center mb-2">Create Account</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
@@ -77,41 +86,41 @@ export default function SignupPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="label">Email</label>
+            <label htmlFor="email" className="label text-[10px] uppercase">Email</label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input"
-              placeholder="you@example.com"
+              placeholder="superawesomeuser@quizme.com"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="label">Password</label>
+            <label htmlFor="password" className="label text-[10px] uppercase">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
-              placeholder="At least 6 characters"
+              placeholder="at least 6 characters"
               required
               minLength={6}
             />
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="label">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="label text-[10px] uppercase">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="input"
-              placeholder="Confirm your password"
+              placeholder="just double checking..."
               required
             />
           </div>
@@ -119,18 +128,19 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full disabled:opacity-50"
+            className="btn-primary w-full disabled:opacity-50 uppercase"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-gray-600">
+        <p className="mt-6 text-center text-secondary">
           Already have an account?{' '}
           <Link href="/login" className="text-primary font-medium hover:underline">
             Sign in
           </Link>
         </p>
+      </div>
       </div>
     </div>
   )

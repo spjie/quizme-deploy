@@ -24,7 +24,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Kirang+Haerang&display=swap" rel="stylesheet" />
       </head>
-      <body className="min-h-screen bg-background flex flex-col">
+      <body className="min-h-screen bg-background flex flex-col text-primary">
         <MobileBlocker />
         <AuthProvider>
           <Navbar />

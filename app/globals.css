@@ -2,22 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: #47240a;
-  --primary-dark: #2A1D17;
-  --secondary: #F5DF4D;
-  --secondary-dark: #E5CF3D;
-  --accent: #F5F3F3;
-  --background: #FEFDFB;
-  --border: #3D2A21;
-  --gold: #D4AF37;
-  --font-display: 'Kirang Haerang', cursive;
-}
-
-body {
-  color: var(--primary);
-}
-
 /* Custom button styles */
 .btn-primary {
   @apply text-white bg-primary rounded-full px-6 py-3 text-[12px] tracking-wider hover:-translate-y-0.5 hover:shadow-lg transition-all;
@@ -71,7 +55,11 @@ body {
 
 /* Form input styles */
 .input {
-  @apply w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary;
+  @apply w-full px-4 py-3 rounded-xl border border-[#eae3db] focus:outline-none focus:border-primary;
+}
+
+input::placeholder {
+  color: #d6c9c0;
 }
 
 .label {
